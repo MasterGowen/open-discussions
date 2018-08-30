@@ -2,6 +2,8 @@
 /* global SETTINGS:false */
 import React from "react"
 
+import BackButton from "../BackButton"
+
 type LoginGreetingProps = {
   email: string,
   name: ?string,
