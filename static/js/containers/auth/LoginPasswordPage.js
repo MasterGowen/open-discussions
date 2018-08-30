@@ -10,7 +10,7 @@ import LoginGreeting from "../../components/auth/LoginGreeting"
 import withForm from "../../hoc/withForm"
 
 import { actions } from "../../actions"
-import { processAuthResponse } from "../../lib/auth"
+import { processAuthResponse, goToFirstLoginStep } from "../../lib/auth"
 import { configureForm } from "../../lib/forms"
 import { formatTitle } from "../../lib/title"
 import { LOGIN_URL } from "../../lib/url"
@@ -50,7 +50,14 @@ export class LoginPasswordPage extends React.Component<Props> {
   }
 
   render() {
-    const { renderForm, formError, email, name, profileImageUrl } = this.props
+    const {
+      renderForm,
+      formError,
+      email,
+      name,
+      profileImageUrl,
+      history
+    } = this.props
     return (
       <div className="content auth-page login-password-page">
         <div className="main-content">
@@ -58,11 +65,16 @@ export class LoginPasswordPage extends React.Component<Props> {
             <MetaTags>
               <title>{formatTitle("Welcome Back!")}</title>
             </MetaTags>
-            <LoginGreeting
-              email={email}
-              name={name}
-              profileImageUrl={profileImageUrl}
-            />
+            <div className="form-header">
+              <div className="row">
+                <LoginGreeting
+                  email={email}
+                  name={name}
+                  profileImageUrl={profileImageUrl}
+                  onBackButtonClick={R.partial(goToFirstLoginStep, [history])}
+                />
+              </div>
+            </div>
             {renderForm({ formError })}
           </Card>
         </div>

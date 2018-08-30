@@ -1,5 +1,6 @@
 // @flow
 import React from "react"
+import R from "ramda"
 import { connect } from "react-redux"
 import { MetaTags } from "react-meta-tags"
 
@@ -15,8 +16,10 @@ import {
   getAuthUiEmailSelector,
   getAuthUiImgSelector
 } from "../../reducers/ui"
+import { goToFirstLoginStep } from "../../lib/auth"
 
 type LoginProviderRequiredPageProps = {
+  history: Object,
   provider: string,
   email: string,
   name: string,
@@ -39,6 +42,7 @@ const renderExternalProviderLink = (provider: string) => {
 }
 
 export const LoginProviderRequiredPage = ({
+  history,
   provider,
   email,
   name,
@@ -60,6 +64,7 @@ export const LoginProviderRequiredPage = ({
             email={email}
             name={name}
             profileImageUrl={profileImageUrl}
+            onBackButtonClick={R.partial(goToFirstLoginStep, [history])}
           />
           <p>You already have a login with</p>
           {externalLink}

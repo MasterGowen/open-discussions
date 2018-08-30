@@ -8,7 +8,11 @@ type BackButtonProps = {
 
 const BackButton = ({ onClick, className }: BackButtonProps) => (
   // TODO: preventDefault
-  <a href="#" onClick={onClick} className={`material-icons ${className || ""}`}>
+  <a
+    href="#"
+    onClick={onClick}
+    className={`material-icons back-button ${className || ""}`}
+  >
     keyboard_backspace
   </a>
 )

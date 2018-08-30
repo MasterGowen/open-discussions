@@ -7,33 +7,36 @@ import BackButton from "../BackButton"
 type LoginGreetingProps = {
   email: string,
   name: ?string,
-  profileImageUrl: ?string
+  profileImageUrl: ?string,
+  onBackButtonClick: Function
 }
 
 const LoginGreeting = ({
   email,
   name,
-  profileImageUrl
+  profileImageUrl,
+  onBackButtonClick
 }: LoginGreetingProps) => {
-  const heading = name ? `Hi ${name}` : "Welcome Back!"
+  const headingText = name ? `Hi ${name}` : "Welcome Back!"
+  const body =
+    name && profileImageUrl ? (
+      <div className="profile-image-email">
+        <img
+          src={profileImageUrl}
+          alt={`Profile image for ${name}`}
+          className="profile-image small"
+        />
+        <span>{email}</span>
+      </div>
+    ) : null
 
-  return (
-    <div>
-      <h3>{heading}</h3>
-      {name && profileImageUrl ? (
-        <div key="greeting-body" className="form-header">
-          <div className="row profile-image-email">
-            <img
-              src={profileImageUrl}
-              alt={`Profile image for ${name}`}
-              className="profile-image small"
-            />
-            <span>{email}</span>
-          </div>
-        </div>
-      ) : null}
-    </div>
-  )
+  return [
+    <div key="login-greeting-header" className="login-greeting-header">
+      <BackButton onClick={onBackButtonClick} />
+      <h3>{headingText}</h3>
+    </div>,
+    <div key="login-greeting-body">{body}</div>
+  ]
 }
 
 export default LoginGreeting

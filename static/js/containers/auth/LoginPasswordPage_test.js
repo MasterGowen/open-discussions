@@ -112,4 +112,16 @@ describe("LoginPasswordPage", () => {
       "passwordtest"
     )
   })
+
+  it("passes a click handler to LoginGreeting that navigates to the first login page", async () => {
+    const { inner } = await renderPage()
+
+    const { onBackButtonClick } = inner.find("LoginGreeting").props()
+
+    await onBackButtonClick()
+
+    const history = helper.browserHistory
+    assert.lengthOf(history, 2)
+    assert.equal(history.location.pathname, LOGIN_URL)
+  })
 })
