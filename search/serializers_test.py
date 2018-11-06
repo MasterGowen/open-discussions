@@ -181,7 +181,7 @@ def test_es_profile_serializer(mock_channel_api, user):
         "author_avatar_medium": image_uri(user.profile, IMAGE_MEDIUM),
         "author_bio": user.profile.bio,
         "author_headline": user.profile.headline,
-        "author_channel_membership": "channel01,channel02",
+        "author_channel_membership": ["channel01", "channel02"],
     }
 
 

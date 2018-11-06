@@ -76,9 +76,9 @@ class ESProfileSerializer(ESSerializer):
 
         client = Api(discussions_obj.user)
         return {
-            "author_channel_membership": ",".join(
-                [channel.display_name for channel in client.list_channels()]
-            )
+            "author_channel_membership": [
+                channel.display_name for channel in client.list_channels()
+            ]
         }
 
 
