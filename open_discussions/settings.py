@@ -78,9 +78,9 @@ INSTALLED_APPS = (
     "corsheaders",
     "anymail",
     # django-hijack
-    'hijack',
-    'compat',
-    'hijack_admin',
+    "hijack",
+    "compat",
+    "hijack_admin",
     # Put our apps after this point
     "open_discussions",
     "authentication",
@@ -482,7 +482,7 @@ RECAPTCHA_SECRET_KEY = get_string("RECAPTCHA_SECRET_KEY", "")
 
 # Hijack
 HIJACK_ALLOW_GET_REQUESTS = True
-HIJACK_LOGOUT_REDIRECT_URL = '/admin/auth/user'
+HIJACK_LOGOUT_REDIRECT_URL = "/admin/auth/user"
 
 MEDIA_ROOT = get_string("MEDIA_ROOT", "/var/media/")
 MEDIA_URL = "/media/"

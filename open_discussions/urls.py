@@ -73,7 +73,7 @@ urlpatterns = [
     url(r"^search/", index, name="site-search"),
     url(r"^terms-and-conditions/", index, name="terms-and-conditions"),
     # Hijack
-    url(r'^hijack/', include('hijack.urls', namespace='hijack')),
+    url(r"^hijack/", include("hijack.urls", namespace="hijack")),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 if settings.DEBUG:
