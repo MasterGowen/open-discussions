@@ -38,16 +38,6 @@
     font-weight: 400;
     margin-bottom: 5px;
 
-    @include breakpoint(desktopwide) {
-      &.compact {
-        flex-direction: row;
-
-        .thumbnail {
-          margin-right: 15px;
-        }
-      }
-    }
-
     .thumbnail {
       width: 100%;
       text-align: center;
@@ -59,21 +49,7 @@
         margin-bottom: 10px;
       }
 
-      @include breakpoint(desktopwide) {
-        img {
-          max-height: 400px;
-          width: 100%;
-          object-fit: cover;
-        }
-      }
-
       &.compact {
-        @include breakpoint(desktopwide) {
-          height: 200px;
-          width: 300px;
-          flex: none;
-        }
-
         img {
           max-height: 200px;
         }
@@ -89,6 +65,32 @@
 
       .description {
         font-size: 16px;
+      }
+    }
+  }
+}
+
+.embedly.two-column-desktop {
+  @include breakpoint(desktopwide) {
+    .link {
+      &.compact {
+        flex-direction: row;
+
+        .thumbnail {
+          margin-right: 15px;
+
+          img {
+            max-height: 400px;
+            width: 100%;
+            object-fit: cover;
+          }
+
+          &.compact {
+            height: 200px;
+            width: 300px;
+            flex: none;
+          }
+        }
       }
     }
   }

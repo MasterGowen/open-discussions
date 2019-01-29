@@ -70,7 +70,7 @@ export default class ExpandedPostDisplay extends React.Component<Props> {
           {embedly && embedly.provider_name ? (
             <div className="provider-name">{embedly.provider_name}</div>
           ) : null}
-          <Embedly embedly={embedly} />
+          <Embedly embedly={embedly} allowTwoColumn={true} />
         </React.Fragment>
       )
     case LINK_TYPE_TEXT:

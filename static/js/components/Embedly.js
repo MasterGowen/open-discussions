@@ -28,7 +28,8 @@ export const EmbedlyLoader = (props: Object = {}) => (
 )
 
 type Props = {
-  embedly: Object
+  embedly: Object,
+  allowTwoColumn?: boolean
 }
 
 export default class Embedly extends React.Component<Props> {
@@ -108,10 +109,10 @@ export default class Embedly extends React.Component<Props> {
   }
 
   render() {
-    const { embedly } = this.props
+    const { embedly, allowTwoColumn } = this.props
 
     return embedly && embedly.type !== "error" ? (
-      <div className="embedly">{this.renderEmbed()}</div>
+      <div className={`embedly ${allowTwoColumn ? "two-column-desktop" : ""}`}>{this.renderEmbed()}</div>
     ) : (
       <EmbedlyLoader />
     )

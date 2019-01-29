@@ -95,7 +95,7 @@ export default class CreatePostForm extends React.Component<Props, State> {
 
     return (
       <div className="embedly-preview">
-        <Embedly embedly={embedly} />
+        <Embedly embedly={embedly} allowTwoColumn={true} />
       </div>
     )
   }
