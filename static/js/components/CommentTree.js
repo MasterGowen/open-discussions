@@ -43,7 +43,6 @@ type Props = {
   remove: CommentRemoveFunc,
   approve: CommentRemoveFunc,
   loadMoreComments?: LoadMoreCommentsFunc,
-  beginEditing?: BeginEditingFunc,
   isModerator: boolean,
   isPrivateChannel: boolean,
   processing?: boolean,
