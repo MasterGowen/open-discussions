@@ -246,3 +246,62 @@ function CommentActionsInner(props) {
     </div>
   )
 }
+
+const mapStateToProps = (state, ownProps) => {
+  const { posts, channels, comments, forms, ui, embedly } = state
+  const postID = getPostID(ownProps)
+  const { channelName } = ownProps
+  const commentID = getCommentID(ownProps)
+  const post = posts.data.get(postID)
+  const channel = channels.data.get(channelName)
+  const commentsTree = comments.data.get(postID)
+  const embedlyResponse =
+    post && post.url ? embedly.data.get(post.url) : undefined
+
+  const notFound = any404Error([posts, comments, channels])
+  const notAuthorized = anyNotAuthorizedErrorType([posts, comments])
+
+  const loaded = notFound
+    ? true
+    : R.none(R.isNil, [post, channel, commentsTree])
+
+  const postDropdownMenuOpen = post
+    ? ui.dropdownMenus.has(getPostDropdownMenuKey(post))
+    : false
+
+  const { dropdownMenus } = ui
+
+  const postShareMenuOpen = ui.dropdownMenus.has(POST_SHARE_MENU_KEY)
+
+  return {
+    ...postModerationSelector(state, ownProps),
+    ...commentModerationSelector(state, ownProps),
+    postID,
+    channelName,
+    commentID,
+    forms,
+    post,
+    channel,
+    commentsTree,
+    loaded,
+    notFound,
+    notAuthorized,
+    postDropdownMenuOpen,
+    postShareMenuOpen,
+    dropdownMenus,
+    profile:     getOwnProfile(state),
+    isModerator: channel && channel.user_is_moderator,
+    errored:
+      anyErrorExcept404([posts, channels]) ||
+      anyErrorExcept404or410([comments]),
+    subscribedChannels:         getSubscribedChannels(state),
+    commentInFlight:            comments.processing,
+    postDeleteDialogVisible:    ui.dialogs.has(DELETE_POST_DIALOG),
+    commentDeleteDialogVisible: ui.dialogs.has(DELETE_COMMENT_DIALOG),
+    postReportDialogVisible:    ui.dialogs.has(REPORT_POST_DIALOG),
+    commentReportDialogVisible: ui.dialogs.has(REPORT_COMMENT_DIALOG),
+    embedly:                    embedlyResponse
+  }
+}
+
+
