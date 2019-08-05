@@ -90,7 +90,10 @@ function Comment(props) {
               />
             </div>
           ) : null}
-          {this.renderCommentActions(comment, atMaxDepth)}
+          <CommentActions 
+            comment={comment}
+            atMaxDepth={atMaxDepth}
+          />
         </div>
       </Card>
       {atMaxDepth ? null : (
@@ -102,7 +105,7 @@ function Comment(props) {
   )
 }
 
-function CommentActions(props) {
+function CommentActionsInner(props) {
   const {
     upvote,
     downvote,
