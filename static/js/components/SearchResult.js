@@ -137,7 +137,7 @@ export default class SearchResult extends React.Component<Props> {
       toggleFacet,
       setShowResourceDrawer,
       overrideObject,
-searchResultUI
+      searchResultUI
     } = this.props
     if (result.object_type === "post") {
       // $FlowFixMe: This will always be a PostResult

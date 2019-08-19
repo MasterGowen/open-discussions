@@ -28,7 +28,7 @@ import { favoriteCourseMutation } from "../lib/queries/courses"
 import { favoriteBootcampMutation } from "../lib/queries/bootcamps"
 import { favoriteProgramMutation } from "../lib/queries/programs"
 import { favoriteUserListMutation } from "../lib/queries/user_lists"
-import { SEARCH_GRID_UI } from "../lib/search"
+import { SEARCH_GRID_UI, SEARCH_LIST_UI } from "../lib/search"
 
 import type { LearningResourceSummary } from "../flow/discussionTypes"
 
@@ -60,6 +60,11 @@ const getPlatform = (object: LearningResourceSummary): string => {
 
 const getPlatformName = object => platformReadableNames[getPlatform(object)]
 
+const getClassName = searchResultUI =>
+  `learning-resource-card ${
+    searchResultUI === SEARCH_LIST_UI ? "list-view" : ""
+  }`.trim()
+
 const formatTopics = (topics: Array<string>) =>
   topics.map(topic => topic.name).join(" ")
 
@@ -87,7 +92,7 @@ export const LearningResourceCard = ({
 
   return (
     <Card
-      className="learning-resource-card"
+      className={getClassName(searchResultUI)}
       borderless={searchResultUI === SEARCH_GRID_UI}
     >
       <div className="cover-image" onClick={showResourceDrawer}>
@@ -115,21 +120,22 @@ export const LearningResourceCard = ({
         <div className="row availability-price-favorite">
           <div className="price grey-surround">
             <i className="material-icons attach_money">attach_money</i>
-            {minPrice(object)}</div>
+            {minPrice(object)}
+          </div>
           <div className="availability grey-surround">
             <i className="material-icons calendar_today">calendar_today</i>
             {availabilityLabel(object.availability || COURSE_AVAILABLE_NOW)}
           </div>
           <div className="favorite grey-surround">
-          <img
-            className="favorite"
-            src={
-              // $FlowFixMe
-              object.is_favorite ? starSelectedURL : starUnselectedURL
-            }
-            onClick={() => toggleFavorite(object)}
-          />
-        </div>
+            <img
+              className="favorite"
+              src={
+                // $FlowFixMe
+                object.is_favorite ? starSelectedURL : starUnselectedURL
+              }
+              onClick={() => toggleFavorite(object)}
+            />
+          </div>
         </div>
       </div>
     </Card>

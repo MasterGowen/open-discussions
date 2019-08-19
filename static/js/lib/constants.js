@@ -32,9 +32,9 @@ export const platformLogoUrls = {
 }
 
 export const platformReadableNames = {
-  [ocwPlatform]: "MIT OpenCourseWare",
-  [edxPlatform]: "edX",
-  [bootcampsPlatform]: "MIT Bootcamp",
+  [ocwPlatform]:          "MIT OpenCourseWare",
+  [edxPlatform]:          "edX",
+  [bootcampsPlatform]:    "MIT Bootcamp",
   [micromastersPlatform]: "MIT MicroMasters"
 }
 
