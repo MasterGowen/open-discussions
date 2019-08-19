@@ -39,7 +39,11 @@ import {
   LR_TYPE_USERLIST
 } from "../lib/constants"
 import { emptyOrNil, preventDefaultAndInvoke, toArray } from "../lib/util"
-import { mergeFacetResults } from "../lib/search"
+import {
+  mergeFacetResults,
+  SEARCH_GRID_UI,
+  SEARCH_LIST_UI
+} from "../lib/search"
 import { COURSE_SEARCH_BANNER_URL } from "../lib/url"
 import {
   favoritesRequest,
@@ -108,9 +112,6 @@ const facetDisplayMap = [
 
 const shouldRunSearch = R.complement(R.eqProps("activeFacets"))
 
-const GRID_UI = "grid"
-const LIST_UI = "list"
-
 export class CourseSearchPage extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props)
@@ -129,7 +130,7 @@ export class CourseSearchPage extends React.Component<Props, State> {
       error:             null,
       currentFacetGroup: null,
       incremental:       false,
-      searchResultUI:    GRID_UI
+      searchResultUI:    SEARCH_GRID_UI
     }
   }
 
@@ -325,7 +326,7 @@ export class CourseSearchPage extends React.Component<Props, State> {
       >
         <Grid>
           {results.map((result, i) => (
-            <Cell width={searchResultUI === GRID_UI ? 4 : 12} key={i}>
+            <Cell width={searchResultUI === SEARCH_GRID_UI ? 4 : 12} key={i}>
               <SearchResult
                 result={result}
                 overrideObject={
