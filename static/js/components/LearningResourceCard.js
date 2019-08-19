@@ -16,13 +16,13 @@ import {
 import {
   CAROUSEL_IMG_WIDTH,
   CAROUSEL_IMG_HEIGHT,
-  platformLogoUrls,
   platforms,
   LR_TYPE_COURSE,
   LR_TYPE_BOOTCAMP,
   LR_TYPE_USERLIST,
   LR_TYPE_PROGRAM,
-  COURSE_AVAILABLE_NOW
+  COURSE_AVAILABLE_NOW,
+  platformReadableNames
 } from "../lib/constants"
 import { favoriteCourseMutation } from "../lib/queries/courses"
 import { favoriteBootcampMutation } from "../lib/queries/bootcamps"
@@ -58,6 +58,21 @@ const getPlatform = (object: LearningResourceSummary): string => {
   }
 }
 
+const getPlatformName = object =>
+  platformReadableNames[getPlatform(object)]
+
+const formatTopics = (topics: Array<string>) =>
+  topics.map(topic => topic.name).join(" ")
+
+const Subtitle = ({ label, content }) => (
+  <div className="row subtitle">
+    <div className="lr-subtitle">
+      <span className="grey">{label}</span>
+      {content}
+    </div>
+  </div>
+)
+
 export const LearningResourceCard = ({
   object,
   setShowResourceDrawer,
@@ -92,32 +107,16 @@ export const LearningResourceCard = ({
         <div className="row course-title" onClick={showResourceDrawer}>
           <Dotdotdot clamp={2}>{object.title}</Dotdotdot>
         </div>
-        <div className="row topics">
-          {object.topics.length > 0
-            ? object.topics.slice(0, 3).map(topic => (
-              <div
-                className="topic"
-                key={topic.name}
-                onClick={
-                  toggleFacet
-                    ? () => toggleFacet("topics", topic.name, true)
-                    : null
-                }
-              >
-                {topic.name}
-              </div>
-            ))
-            : null}
-        </div>
+        <Subtitle
+          content={platformReadableNames[getPlatform(object)]}
+          content={getPlatformName(object)}
+          label="Offered by - "
+        />
+        <Subtitle content={formatTopics(object.topics)} label="Subject - " />
         <div className="row availability">
           {availabilityLabel(object.availability || COURSE_AVAILABLE_NOW)}
         </div>
         <div className="row platform-favorite">
-          <img
-            className="course-platform"
-            src={platformLogoUrls[getPlatform(object)]}
-            alt={`logo for ${getPlatform(object)}`}
-          />
           <img
             className="favorite"
             src={

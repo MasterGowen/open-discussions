@@ -5,7 +5,7 @@
     }
 
     .cover-image img {
-      border-radius: 5px 5px 0 0 ;
+      border-radius: 5px 5px 0 0;
     }
   }
 
@@ -30,10 +30,25 @@
     &.course-title {
       margin: 15px 0 10px 0;
       min-height: 40px;
-      font-size: 16px;
+      font-size: 18px;
       color: black;
       font-weight: 500;
       cursor: pointer;
+    }
+
+    &.subtitle {
+      margin-bottom: 5px;
+      .lr-subtitle {
+        font-size: 14px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        width: 100%;
+
+        .grey {
+          color: $font-grey-light;
+        }
+      }
     }
 
     &.topics {
