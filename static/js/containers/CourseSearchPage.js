@@ -108,6 +108,9 @@ const facetDisplayMap = [
 
 const shouldRunSearch = R.complement(R.eqProps("activeFacets"))
 
+const GRID_UI = "grid"
+const LIST_UI = "list"
+
 export class CourseSearchPage extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props)
@@ -125,7 +128,8 @@ export class CourseSearchPage extends React.Component<Props, State> {
       from:              0,
       error:             null,
       currentFacetGroup: null,
-      incremental:       false
+      incremental:       false,
+      searchResultUI:    GRID_UI
     }
   }
 
@@ -300,7 +304,7 @@ export class CourseSearchPage extends React.Component<Props, State> {
       total,
       setShowResourceDrawer
     } = this.props
-    const { from, incremental } = this.state
+    const { from, incremental, searchResultUI } = this.state
 
     if ((processing || !loaded) && !incremental) {
       return <PostLoading />
@@ -321,7 +325,7 @@ export class CourseSearchPage extends React.Component<Props, State> {
       >
         <Grid>
           {results.map((result, i) => (
-            <Cell width={4} key={i}>
+            <Cell width={searchResultUI === GRID_UI ? 4 : 12} key={i}>
               <SearchResult
                 result={result}
                 overrideObject={
@@ -330,6 +334,7 @@ export class CourseSearchPage extends React.Component<Props, State> {
                 }
                 toggleFacet={this.toggleFacet}
                 setShowResourceDrawer={setShowResourceDrawer}
+                searchResultUI={searchResultUI}
               />
             </Cell>
           ))}
