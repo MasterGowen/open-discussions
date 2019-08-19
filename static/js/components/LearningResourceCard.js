@@ -35,7 +35,6 @@ import type { LearningResourceSummary } from "../flow/discussionTypes"
 type OwnProps = {|
   object: LearningResourceSummary,
   setShowResourceDrawer: Function,
-  toggleFacet?: Function
 |}
 
 type DispatchProps = {|
@@ -80,7 +79,6 @@ const Subtitle = ({ label, content }) => (
 export const LearningResourceCard = ({
   object,
   setShowResourceDrawer,
-  toggleFacet,
   toggleFavorite,
   searchResultUI
 }: Props) => {
@@ -112,7 +110,6 @@ export const LearningResourceCard = ({
           <Dotdotdot clamp={2}>{object.title}</Dotdotdot>
         </div>
         <Subtitle
-          content={platformReadableNames[getPlatform(object)]}
           content={getPlatformName(object)}
           label="Offered by - "
         />
