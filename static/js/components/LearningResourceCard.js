@@ -58,8 +58,7 @@ const getPlatform = (object: LearningResourceSummary): string => {
   }
 }
 
-const getPlatformName = object =>
-  platformReadableNames[getPlatform(object)]
+const getPlatformName = object => platformReadableNames[getPlatform(object)]
 
 const formatTopics = (topics: Array<string>) =>
   topics.map(topic => topic.name).join(" ")
@@ -113,10 +112,15 @@ export const LearningResourceCard = ({
           label="Offered by - "
         />
         <Subtitle content={formatTopics(object.topics)} label="Subject - " />
-        <div className="row availability">
-          {availabilityLabel(object.availability || COURSE_AVAILABLE_NOW)}
-        </div>
-        <div className="row platform-favorite">
+        <div className="row availability-price-favorite">
+          <div className="price grey-surround">
+            <i className="material-icons attach_money">attach_money</i>
+            {minPrice(object)}</div>
+          <div className="availability grey-surround">
+            <i className="material-icons calendar_today">calendar_today</i>
+            {availabilityLabel(object.availability || COURSE_AVAILABLE_NOW)}
+          </div>
+          <div className="favorite grey-surround">
           <img
             className="favorite"
             src={
@@ -126,7 +130,7 @@ export const LearningResourceCard = ({
             onClick={() => toggleFavorite(object)}
           />
         </div>
-        <div className="row price">{minPrice(object)}</div>
+        </div>
       </div>
     </Card>
   )
