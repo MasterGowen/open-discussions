@@ -134,7 +134,8 @@ export default class SearchResult extends React.Component<Props> {
       commentDownvote,
       toggleFacet,
       setShowResourceDrawer,
-      overrideObject
+      overrideObject,
+searchResultUI
     } = this.props
     if (result.object_type === "post") {
       // $FlowFixMe: This will always be a PostResult
@@ -172,6 +173,7 @@ export default class SearchResult extends React.Component<Props> {
           toggleFacet={toggleFacet}
           setShowResourceDrawer={setShowResourceDrawer}
           overrideObject={overrideObject}
+          searchResultUI={searchResultUI}
         />
       )
     }
