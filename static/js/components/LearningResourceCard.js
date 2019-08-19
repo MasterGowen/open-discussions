@@ -5,6 +5,8 @@ import Dotdotdot from "react-dotdotdot"
 import { mutateAsync } from "redux-query"
 import { connect } from "react-redux"
 
+import Card from "./Card"
+
 import { availabilityLabel, minPrice } from "../lib/learning_resources"
 import {
   embedlyThumbnail,
@@ -26,6 +28,7 @@ import { favoriteCourseMutation } from "../lib/queries/courses"
 import { favoriteBootcampMutation } from "../lib/queries/bootcamps"
 import { favoriteProgramMutation } from "../lib/queries/programs"
 import { favoriteUserListMutation } from "../lib/queries/user_lists"
+import { SEARCH_GRID_UI } from "../lib/search"
 
 import type { LearningResourceSummary } from "../flow/discussionTypes"
 
@@ -59,7 +62,8 @@ export const LearningResourceCard = ({
   object,
   setShowResourceDrawer,
   toggleFacet,
-  toggleFavorite
+  toggleFavorite,
+  searchResultUI
 }: Props) => {
   const showResourceDrawer = () =>
     setShowResourceDrawer({
@@ -84,45 +88,47 @@ export const LearningResourceCard = ({
           alt={`cover image for ${object.title}`}
         />
       </div>
-      <div className="row course-title" onClick={showResourceDrawer}>
-        <Dotdotdot clamp={2}>{object.title}</Dotdotdot>
+      <div className="lr-info">
+        <div className="row course-title" onClick={showResourceDrawer}>
+          <Dotdotdot clamp={2}>{object.title}</Dotdotdot>
+        </div>
+        <div className="row topics">
+          {object.topics.length > 0
+            ? object.topics.slice(0, 3).map(topic => (
+              <div
+                className="topic"
+                key={topic.name}
+                onClick={
+                  toggleFacet
+                    ? () => toggleFacet("topics", topic.name, true)
+                    : null
+                }
+              >
+                {topic.name}
+              </div>
+            ))
+            : null}
+        </div>
+        <div className="row availability">
+          {availabilityLabel(object.availability || COURSE_AVAILABLE_NOW)}
+        </div>
+        <div className="row platform-favorite">
+          <img
+            className="course-platform"
+            src={platformLogoUrls[getPlatform(object)]}
+            alt={`logo for ${getPlatform(object)}`}
+          />
+          <img
+            className="favorite"
+            src={
+              // $FlowFixMe
+              object.is_favorite ? starSelectedURL : starUnselectedURL
+            }
+            onClick={() => toggleFavorite(object)}
+          />
+        </div>
+        <div className="row price">{minPrice(object)}</div>
       </div>
-      <div className="row topics">
-        {object.topics.length > 0
-          ? object.topics.slice(0, 3).map(topic => (
-            <div
-              className="topic"
-              key={topic.name}
-              onClick={
-                toggleFacet
-                  ? () => toggleFacet("topics", topic.name, true)
-                  : null
-              }
-            >
-              {topic.name}
-            </div>
-          ))
-          : null}
-      </div>
-      <div className="row availability">
-        {availabilityLabel(object.availability || COURSE_AVAILABLE_NOW)}
-      </div>
-      <div className="row platform-favorite">
-        <img
-          className="course-platform"
-          src={platformLogoUrls[getPlatform(object)]}
-          alt={`logo for ${getPlatform(object)}`}
-        />
-        <img
-          className="favorite"
-          src={
-            // $FlowFixMe
-            object.is_favorite ? starSelectedURL : starUnselectedURL
-          }
-          onClick={() => toggleFavorite(object)}
-        />
-      </div>
-      <div className="row price">{minPrice(object)}</div>
     </Card>
   )
 }

@@ -1,14 +1,17 @@
 .learning-resource-card {
-  @extend %card;
+  &.borderless {
+    .lr-info {
+      padding: 16px;
+    }
+
+    .cover-image img {
+      border-radius: 5px 5px 0 0 ;
+    }
+  }
 
   width: initial;
-  border: 1px solid #c2c0bf;
   margin-bottom: 0;
   font-family: roboto;
-
-  .card-contents {
-    padding: 16px;
-  }
 
   .cover-image {
     height: 171px;
@@ -54,12 +57,6 @@
       font-weight: 500;
       font-size: 14px;
     }
-  }
-
-  .blue-bottom-border {
-    background-color: $course-blue;
-    height: 12px;
-    border-radius: 0 0 5px 5px;
   }
 
   .course-platform {

@@ -99,7 +99,8 @@ const LearningResourceSearchResult = ({
   result,
   toggleFacet,
   setShowResourceDrawer,
-  overrideObject
+  overrideObject,
+  searchResultUI
 }: LearningResourceProps) => {
   // $FlowFixMe: this should only be used for courses
 
@@ -108,6 +109,7 @@ const LearningResourceSearchResult = ({
       object={searchResultToLearningResource(result, overrideObject)}
       toggleFacet={toggleFacet}
       setShowResourceDrawer={setShowResourceDrawer}
+      searchResultUI={searchResultUI}
     />
   )
 }
