@@ -76,6 +76,20 @@ const Subtitle = ({ label, content }) => (
   </div>
 )
 
+const CoverImage = ({ object, showResourceDrawer }) =>
+      <div className="cover-image" onClick={showResourceDrawer}>
+        <img
+          src={embedlyThumbnail(
+            SETTINGS.embedlyKey,
+            object.image_src || "",
+            CAROUSEL_IMG_HEIGHT,
+            CAROUSEL_IMG_WIDTH
+          )}
+          height={CAROUSEL_IMG_HEIGHT}
+          alt={`cover image for ${object.title}`}
+        />
+      </div>
+
 export const LearningResourceCard = ({
   object,
   setShowResourceDrawer,
@@ -93,18 +107,7 @@ export const LearningResourceCard = ({
       className={getClassName(searchResultUI)}
       borderless={searchResultUI === SEARCH_GRID_UI}
     >
-      <div className="cover-image" onClick={showResourceDrawer}>
-        <img
-          src={embedlyThumbnail(
-            SETTINGS.embedlyKey,
-            object.image_src || "",
-            CAROUSEL_IMG_HEIGHT,
-            CAROUSEL_IMG_WIDTH
-          )}
-          height={CAROUSEL_IMG_HEIGHT}
-          alt={`cover image for ${object.title}`}
-        />
-      </div>
+      {searchResultUI === SEARCH_GRID_UI ? <CoverImage object={object} showResourceDrawer={showResourceDrawer} /> : null }
       <div className="lr-info">
         <div className="row course-title" onClick={showResourceDrawer}>
           <Dotdotdot clamp={2}>{object.title}</Dotdotdot>
@@ -135,6 +138,7 @@ export const LearningResourceCard = ({
           </div>
         </div>
       </div>
+      {searchResultUI === SEARCH_GRID_UI ? null : <CoverImage object={object} showResourceDrawer={showResourceDrawer} />}
     </Card>
   )
 }

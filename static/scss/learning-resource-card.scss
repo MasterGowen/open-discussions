@@ -15,10 +15,12 @@
 
       .cover-image {
         height: 130px;
-        margin-right: 16px;
+        margin-left: 16px;
+        width: 46%;
 
         img {
           height: 130px;
+          border-radius: 3px;
         }
       }
     }
@@ -27,6 +29,7 @@
       display: flex;
       flex-direction: column;
       justify-content: space-between;
+      width: 100%;
 
       .course-title {
         margin-top: 0;
@@ -82,7 +85,13 @@
       justify-content: flex-start;
 
       .availability, .price {
-        font-size: 14px;
+        font-size: 12px;
+        padding-right: 10px;
+
+        i {
+          font-size: 12px;
+          margin-right: 4px;
+        }
       }
 
       .price {
