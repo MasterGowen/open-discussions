@@ -100,7 +100,8 @@ type State = {
   from: number,
   error: ?string,
   currentFacetGroup: ?CurrentFacet,
-  incremental: boolean
+  incremental: boolean,
+  searchResultUI: string
 }
 
 const facetDisplayMap = [

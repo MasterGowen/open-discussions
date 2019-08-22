@@ -90,14 +90,13 @@ const ProfileSearchResult = ({ result }: ProfileProps) => {
 
 type LearningResourceProps = {
   result: LearningResourceResult,
-  toggleFacet?: Function,
   setShowResourceDrawer?: ({ objectId: string, objectType: string }) => void,
-  overrideObject?: Object
+  overrideObject?: Object,
+  searchResultUI?: string
 }
 
 const LearningResourceSearchResult = ({
   result,
-  toggleFacet,
   setShowResourceDrawer,
   overrideObject,
   searchResultUI
@@ -107,7 +106,6 @@ const LearningResourceSearchResult = ({
   return (
     <LearningResourceCard
       object={searchResultToLearningResource(result, overrideObject)}
-      toggleFacet={toggleFacet}
       setShowResourceDrawer={setShowResourceDrawer}
       searchResultUI={searchResultUI}
     />
@@ -123,7 +121,8 @@ type Props = {
   votedComment?: ?CommentInTree,
   toggleFacet?: Function,
   setShowResourceDrawer?: ({ objectId: string, objectType: string }) => void,
-  overrideObject?: Object
+  overrideObject?: Object,
+  searchResultUI?: string
 }
 export default class SearchResult extends React.Component<Props> {
   render() {
@@ -172,7 +171,6 @@ export default class SearchResult extends React.Component<Props> {
       return (
         <LearningResourceSearchResult
           result={result}
-          toggleFacet={toggleFacet}
           setShowResourceDrawer={setShowResourceDrawer}
           overrideObject={overrideObject}
           searchResultUI={searchResultUI}

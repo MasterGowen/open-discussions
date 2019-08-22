@@ -35,7 +35,8 @@ import type { LearningResourceSummary } from "../flow/discussionTypes"
 
 type OwnProps = {|
   object: LearningResourceSummary,
-  setShowResourceDrawer: Function
+  setShowResourceDrawer: Function,
+  searchResultUI?: string
 |}
 
 type DispatchProps = {|
@@ -65,7 +66,7 @@ const getClassName = searchResultUI =>
     searchResultUI === SEARCH_LIST_UI ? "list-view" : ""
   }`.trim()
 
-const formatTopics = (topics: Array<string>) =>
+const formatTopics = (topics: Array<{ name: string }>) =>
   topics.map(topic => topic.name).join(" ")
 
 const Subtitle = ({ label, content }) => (
@@ -100,7 +101,7 @@ export const LearningResourceCard = ({
 }: Props) => {
   const showResourceDrawer = () =>
     setShowResourceDrawer({
-      objectId:   object.id,
+      objectId: object.id,
       objectType: object.object_type
     })
 
