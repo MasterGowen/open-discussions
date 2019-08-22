@@ -103,7 +103,7 @@ describe("LearningResourceCard", () => {
         .find("Subtitle")
         .at(0)
 
-      let platform =
+      const platform =
         object.object_type === LR_TYPE_BOOTCAMP
           ? platforms.bootcamps
           : object.offered_by || object.platform
