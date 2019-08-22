@@ -34,6 +34,10 @@
       .course-title {
         margin-top: 0;
       }
+
+      .availability-price-favorite {
+        margin-top: 0;
+      }
     }
 
   }
@@ -56,8 +60,14 @@
   .row {
     display: flex;
 
+    &.resource-type {
+      font-size: 13px;
+      color: $font-grey-mid;
+      text-transform: uppercase;
+    }
+
     &.course-title {
-      margin: 15px 0 10px 0;
+      margin: 10px 0;
       min-height: 40px;
       font-size: 18px;
       color: black;
@@ -83,6 +93,7 @@
 
     &.availability-price-favorite {
       justify-content: flex-start;
+      margin-top: 25px;
 
       .availability, .price {
         font-size: 12px;

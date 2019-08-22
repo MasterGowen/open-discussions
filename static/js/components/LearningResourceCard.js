@@ -22,7 +22,8 @@ import {
   LR_TYPE_USERLIST,
   LR_TYPE_PROGRAM,
   COURSE_AVAILABLE_NOW,
-  platformReadableNames
+  platformReadableNames,
+  readableLearningResources
 } from "../lib/constants"
 import { favoriteCourseMutation } from "../lib/queries/courses"
 import { favoriteBootcampMutation } from "../lib/queries/bootcamps"
@@ -109,6 +110,9 @@ export const LearningResourceCard = ({
     >
       {searchResultUI === SEARCH_GRID_UI ? <CoverImage object={object} showResourceDrawer={showResourceDrawer} /> : null }
       <div className="lr-info">
+        <div className="row resource-type">
+          { readableLearningResources[object.object_type] }
+        </div>
         <div className="row course-title" onClick={showResourceDrawer}>
           <Dotdotdot clamp={2}>{object.title}</Dotdotdot>
         </div>

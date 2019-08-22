@@ -130,8 +130,7 @@ export class CourseSearchPage extends React.Component<Props, State> {
       error:             null,
       currentFacetGroup: null,
       incremental:       false,
-      // searchResultUI:    SEARCH_GRID_UI
-      searchResultUI:    SEARCH_LIST_UI
+      searchResultUI:    SEARCH_GRID_UI
     }
   }
 
