@@ -101,7 +101,7 @@ export const LearningResourceCard = ({
 }: Props) => {
   const showResourceDrawer = () =>
     setShowResourceDrawer({
-      objectId: object.id,
+      objectId:   object.id,
       objectType: object.object_type
     })
 
