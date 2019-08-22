@@ -1,4 +1,8 @@
 .learning-resource-card {
+  width: initial;
+  margin-bottom: 0;
+  font-family: roboto;
+
   &.borderless {
     .lr-info {
       padding: 16px;
@@ -40,10 +44,6 @@
       }
     }
   }
-
-  width: initial;
-  margin-bottom: 0;
-  font-family: roboto;
 
   .cover-image {
     height: 171px;
