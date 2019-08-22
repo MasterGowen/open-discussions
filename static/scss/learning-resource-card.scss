@@ -39,7 +39,6 @@
         margin-top: 0;
       }
     }
-
   }
 
   width: initial;
@@ -95,7 +94,8 @@
       justify-content: flex-start;
       margin-top: 25px;
 
-      .availability, .price {
+      .availability,
+      .price {
         font-size: 12px;
         padding-right: 10px;
 

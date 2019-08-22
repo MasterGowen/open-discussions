@@ -67,8 +67,8 @@ export const LR_TYPE_ALL = [
 ]
 
 export const readableLearningResources = {
-  [ LR_TYPE_COURSE ]: "Course",
-  [ LR_TYPE_BOOTCAMP ]: "Bootcamp",
-  [ LR_TYPE_PROGRAM ]: "Program",
-  [ LR_TYPE_USERLIST ]: "Learning Path"
+  [LR_TYPE_COURSE]:   "Course",
+  [LR_TYPE_BOOTCAMP]: "Bootcamp",
+  [LR_TYPE_PROGRAM]:  "Program",
+  [LR_TYPE_USERLIST]: "Learning Path"
 }

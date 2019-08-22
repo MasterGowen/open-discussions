@@ -405,19 +405,17 @@ export class CourseSearchPage extends React.Component<Props, State> {
               ) : null}
             </div>
           </Cell>
-          <Cell width={3}/>
+          <Cell width={3} />
           <Cell width={9}>
             <div className="layout-buttons">
-              <button onClick={
-                () => this.setSearchUI(SEARCH_LIST_UI)}>
+              <button onClick={() => this.setSearchUI(SEARCH_LIST_UI)}>
                 LIST
               </button>
-              <button onClick={
-                () => this.setSearchUI(SEARCH_GRID_UI)}>
+              <button onClick={() => this.setSearchUI(SEARCH_GRID_UI)}>
                 GRID
               </button>
-              </div>
-            </Cell>
+            </div>
+          </Cell>
           <Cell width={3}>
             <Card>
               {facetDisplayMap.map(([name, title, labelFunction], i) => (
@@ -433,8 +431,7 @@ export class CourseSearchPage extends React.Component<Props, State> {
               ))}
             </Card>
           </Cell>
-          <Cell width={9}>
-            {error ? null : this.renderResults()}</Cell>
+          <Cell width={9}>{error ? null : this.renderResults()}</Cell>
         </Grid>
         <LearningResourceDrawer />
       </BannerPageWrapper>
