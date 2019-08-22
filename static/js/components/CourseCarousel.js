@@ -56,7 +56,7 @@ const CourseCarousel = ({ title, courses, setShowResourceDrawer }: Props) => (
           key={idx}
           object={course}
           setShowResourceDrawer={setShowResourceDrawer}
-          searchResultUI={SEARCH_GRID_UI}
+          searchResultLayout={SEARCH_GRID_UI}
         />
       ))}
     </Carousel>

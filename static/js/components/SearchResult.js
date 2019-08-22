@@ -92,14 +92,14 @@ type LearningResourceProps = {
   result: LearningResourceResult,
   setShowResourceDrawer?: ({ objectId: string, objectType: string }) => void,
   overrideObject?: Object,
-  searchResultUI?: string
+  searchResultLayout?: string
 }
 
 const LearningResourceSearchResult = ({
   result,
   setShowResourceDrawer,
   overrideObject,
-  searchResultUI
+  searchResultLayout
 }: LearningResourceProps) => {
   // $FlowFixMe: this should only be used for courses
 
@@ -107,7 +107,7 @@ const LearningResourceSearchResult = ({
     <LearningResourceCard
       object={searchResultToLearningResource(result, overrideObject)}
       setShowResourceDrawer={setShowResourceDrawer}
-      searchResultUI={searchResultUI}
+      searchResultLayout={searchResultLayout}
     />
   )
 }
@@ -122,7 +122,7 @@ type Props = {
   toggleFacet?: Function,
   setShowResourceDrawer?: ({ objectId: string, objectType: string }) => void,
   overrideObject?: Object,
-  searchResultUI?: string
+  searchResultLayout?: string
 }
 export default class SearchResult extends React.Component<Props> {
   render() {
@@ -136,7 +136,7 @@ export default class SearchResult extends React.Component<Props> {
       toggleFacet,
       setShowResourceDrawer,
       overrideObject,
-      searchResultUI
+      searchResultLayout
     } = this.props
     if (result.object_type === "post") {
       // $FlowFixMe: This will always be a PostResult
@@ -173,7 +173,7 @@ export default class SearchResult extends React.Component<Props> {
           result={result}
           setShowResourceDrawer={setShowResourceDrawer}
           overrideObject={overrideObject}
-          searchResultUI={searchResultUI}
+          searchResultLayout={searchResultLayout}
         />
       )
     }

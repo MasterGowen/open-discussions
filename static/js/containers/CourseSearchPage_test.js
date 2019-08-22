@@ -188,7 +188,7 @@ describe("CourseSearchPage", () => {
       error:             null,
       currentFacetGroup: null,
       incremental:       true,
-      searchResultUI:    SEARCH_GRID_UI
+      searchResultLayout:    SEARCH_GRID_UI
     })
   })
 
@@ -367,7 +367,7 @@ describe("CourseSearchPage", () => {
       from:              0,
       error:             null,
       incremental:       false,
-      searchResultUI:    SEARCH_GRID_UI
+      searchResultLayout:    SEARCH_GRID_UI
     })
   })
 
@@ -420,7 +420,7 @@ describe("CourseSearchPage", () => {
         result: makeSearchFacetResult().topics
       },
       incremental:    false,
-      searchResultUI: SEARCH_GRID_UI
+      searchResultLayout: SEARCH_GRID_UI
     })
   })
 

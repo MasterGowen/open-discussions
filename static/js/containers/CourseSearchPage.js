@@ -101,7 +101,7 @@ type State = {
   error: ?string,
   currentFacetGroup: ?CurrentFacet,
   incremental: boolean,
-  searchResultUI: string
+  searchResultLayout: string
 }
 
 const facetDisplayMap = [
@@ -131,7 +131,7 @@ export class CourseSearchPage extends React.Component<Props, State> {
       error:             null,
       currentFacetGroup: null,
       incremental:       false,
-      searchResultUI:    SEARCH_GRID_UI
+      searchResultLayout:    SEARCH_GRID_UI
     }
   }
 
@@ -247,9 +247,9 @@ export class CourseSearchPage extends React.Component<Props, State> {
     })
   }
 
-  setSearchUI = (searchResultUI: string) => {
+  setSearchUI = (searchResultLayout: string) => {
     this.setState({
-      searchResultUI
+      searchResultLayout
     })
   }
 
@@ -312,7 +312,7 @@ export class CourseSearchPage extends React.Component<Props, State> {
       total,
       setShowResourceDrawer
     } = this.props
-    const { from, incremental, searchResultUI } = this.state
+    const { from, incremental, searchResultLayout } = this.state
 
     if ((processing || !loaded) && !incremental) {
       return <PostLoading />
@@ -333,7 +333,7 @@ export class CourseSearchPage extends React.Component<Props, State> {
       >
         <Grid>
           {results.map((result, i) => (
-            <Cell width={searchResultUI === SEARCH_GRID_UI ? 4 : 12} key={i}>
+            <Cell width={searchResultLayout === SEARCH_GRID_UI ? 4 : 12} key={i}>
               <SearchResult
                 result={result}
                 overrideObject={
@@ -342,7 +342,7 @@ export class CourseSearchPage extends React.Component<Props, State> {
                 }
                 toggleFacet={this.toggleFacet}
                 setShowResourceDrawer={setShowResourceDrawer}
-                searchResultUI={searchResultUI}
+                searchResultLayout={searchResultLayout}
               />
             </Cell>
           ))}
@@ -353,7 +353,7 @@ export class CourseSearchPage extends React.Component<Props, State> {
 
   render() {
     const { match } = this.props
-    const { text, error, activeFacets, searchResultUI } = this.state
+    const { text, error, activeFacets, searchResultLayout } = this.state
 
     return (
       <BannerPageWrapper>
@@ -411,13 +411,13 @@ export class CourseSearchPage extends React.Component<Props, State> {
             <div className="layout-buttons">
               <div
                 onClick={() => this.setSearchUI(SEARCH_LIST_UI)}
-                className={searchResultUI === SEARCH_LIST_UI ? "active" : ""}
+                className={searchResultLayout === SEARCH_LIST_UI ? "active" : ""}
               >
                 <i className="material-icons view_list">view_list</i>
               </div>
               <div
                 onClick={() => this.setSearchUI(SEARCH_GRID_UI)}
-                className={searchResultUI === SEARCH_GRID_UI ? "active" : ""}
+                className={searchResultLayout === SEARCH_GRID_UI ? "active" : ""}
               >
                 <i className="material-icons view_comfy">view_comfy</i>
               </div>

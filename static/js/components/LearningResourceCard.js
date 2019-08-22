@@ -36,7 +36,7 @@ import type { LearningResourceSummary } from "../flow/discussionTypes"
 type OwnProps = {|
   object: LearningResourceSummary,
   setShowResourceDrawer: Function,
-  searchResultUI?: string
+  searchResultLayout?: string
 |}
 
 type DispatchProps = {|
@@ -61,9 +61,9 @@ const getPlatform = (object: LearningResourceSummary): string => {
 
 const getPlatformName = object => platformReadableNames[getPlatform(object)]
 
-const getClassName = searchResultUI =>
+const getClassName = searchResultLayout =>
   `learning-resource-card ${
-    searchResultUI === SEARCH_LIST_UI ? "list-view" : ""
+    searchResultLayout === SEARCH_LIST_UI ? "list-view" : ""
   }`.trim()
 
 const formatTopics = (topics: Array<{ name: string }>) =>
@@ -97,7 +97,7 @@ export const LearningResourceCard = ({
   object,
   setShowResourceDrawer,
   toggleFavorite,
-  searchResultUI
+  searchResultLayout
 }: Props) => {
   const showResourceDrawer = () =>
     setShowResourceDrawer({
@@ -107,10 +107,10 @@ export const LearningResourceCard = ({
 
   return (
     <Card
-      className={getClassName(searchResultUI)}
-      borderless={searchResultUI === SEARCH_GRID_UI}
+      className={getClassName(searchResultLayout)}
+      borderless={searchResultLayout === SEARCH_GRID_UI}
     >
-      {searchResultUI === SEARCH_GRID_UI ? (
+      {searchResultLayout === SEARCH_GRID_UI ? (
         <CoverImage object={object} showResourceDrawer={showResourceDrawer} />
       ) : null}
       <div className="lr-info">
@@ -143,7 +143,7 @@ export const LearningResourceCard = ({
           </div>
         </div>
       </div>
-      {searchResultUI === SEARCH_GRID_UI ? null : (
+      {searchResultLayout === SEARCH_GRID_UI ? null : (
         <CoverImage object={object} showResourceDrawer={showResourceDrawer} />
       )}
     </Card>
