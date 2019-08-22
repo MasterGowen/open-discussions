@@ -353,7 +353,7 @@ export class CourseSearchPage extends React.Component<Props, State> {
 
   render() {
     const { match } = this.props
-    const { text, error, activeFacets } = this.state
+    const { text, error, activeFacets, searchResultUI } = this.state
 
     return (
       <BannerPageWrapper>
@@ -409,12 +409,18 @@ export class CourseSearchPage extends React.Component<Props, State> {
           <Cell width={3} />
           <Cell width={9}>
             <div className="layout-buttons">
-              <button onClick={() => this.setSearchUI(SEARCH_LIST_UI)}>
-                LIST
-              </button>
-              <button onClick={() => this.setSearchUI(SEARCH_GRID_UI)}>
-                GRID
-              </button>
+              <div
+                onClick={() => this.setSearchUI(SEARCH_LIST_UI)}
+                className={searchResultUI === SEARCH_LIST_UI ? "active" : ""}
+              >
+                <i className="material-icons view_list">view_list</i>
+              </div>
+              <div
+                onClick={() => this.setSearchUI(SEARCH_GRID_UI)}
+                className={searchResultUI === SEARCH_GRID_UI ? "active" : ""}
+              >
+                <i className="material-icons view_comfy">view_comfy</i>
+              </div>
             </div>
           </Cell>
           <Cell width={3}>
