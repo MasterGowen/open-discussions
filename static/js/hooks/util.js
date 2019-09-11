@@ -43,3 +43,9 @@ export const useResponsive = () => {
     }
   }, [])
 }
+
+export const useToggle = (default = false) => {
+  const [bool, setBool] = useState(default)
+
+  return () => setBool(bool => !bool)
+}
