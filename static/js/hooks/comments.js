@@ -86,11 +86,25 @@ export const useCommentModeration = (shouldGetReports, channelName) => {
     [dispatch]
   )
 
+  // ⚠️  this is a destructive action! ⚠️
+  const deleteComment = useCallback(
+    async (comment, post) => {
+      await dispatch(actions.comments["delete"](post.id, comment.id))
+      dispatch(
+        setSnackbarMessage({
+          message: "Comment has been deleted"
+        })
+      )
+    },
+    [dispatch]
+  )
+
   return {
     commentRemoveDialogOpen,
     setCommentRemoveDialogOpen,
     ignoreReports,
     removeComment,
-    approveComment
+    approveComment,
+    deleteComment
   }
 }
