@@ -3,9 +3,8 @@ import { useCallback, useState } from "react"
 import { useDispatch } from "react-redux"
 
 import { actions } from "../actions"
-import { approveComment, removeComment } from "../util/api_actions"
+import * as apiActions from "../util/api_actions"
 import { setSnackbarMessage } from "../actions/ui"
-import { actions } from "../actions"
 
 export const useCommentVoting = () => {
   const dispatch = useDispatch()
@@ -36,15 +35,16 @@ export const useCommentVoting = () => {
     [dispatch]
   )
 
-  return {upvote, upvoting, downvote, downvoting}
+  return { upvote, upvoting, downvote, downvoting }
 }
 
 export const useCommentModeration = (shouldGetReports, channelName) => {
   const dispatch = useDispatch()
+  const [commentRemoveDialogOpen, setCommentRemoveDialogOpen] = useState(false)
 
   const approveComment = useCallback(
     async (comment: CommentInTree) => {
-      await approveComment(dispatch, comment)
+      await apiActions.approveComment(dispatch, comment)
       if (shouldGetReports) {
         await dispatch(actions.reports.get(channelName))
       }
@@ -58,39 +58,39 @@ export const useCommentModeration = (shouldGetReports, channelName) => {
   )
 
   const removeComment = useCallback(
-    async (event: Event) => {
-      const {
-        dispatch,
-        focusedComment,
-        channelName,
-        shouldGetReports
-      } = this.props
-      event.preventDefault()
-
-      await removeComment(dispatch, focusedComment)
+    async (comment: CommentInTree) => {
+      await apiActions.removeComment(dispatch, comment)
       if (shouldGetReports) {
         await dispatch(actions.reports.get(channelName))
       }
 
-      this.hideCommentDialog()
+      setCommentRemoveDialogOpen(false)
       dispatch(
         setSnackbarMessage({
           message: "Comment has been removed"
         })
       )
-    }
+    },
+    [dispatch]
+  )
 
-ignoreReports = async (comment: CommentInTree) => {
-      const { dispatch, channelName, shouldGetReports } = this.props
-
+  const ignoreReports = useCallback(
+    async (comment: CommentInTree) => {
       await dispatch(
         actions.comments.patch(comment.id, { ignore_reports: true })
       )
       if (shouldGetReports) {
         await dispatch(actions.reports.get(channelName))
       }
-    }
+    },
+    [dispatch]
+  )
 
-
-
+  return {
+    commentRemoveDialogOpen,
+    setCommentRemoveDialogOpen,
+    ignoreReports,
+    removeComment,
+    approveComment
+  }
 }

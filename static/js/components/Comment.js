@@ -1,10 +1,12 @@
 // @flow
+/* global SETTINGS: false */
 import React, { useState, useCallback } from "react"
 import R from "ramda"
 import moment from "moment"
 import { Link } from "react-router-dom"
 import { useDispatch } from "react-redux"
 
+import Dialog from "./Dialog"
 import ReportCount from "./ReportCount"
 import Card from "./Card"
 import CommentForm from "../components/CommentForm"
@@ -20,10 +22,9 @@ import { preventDefaultAndInvoke, userIsAnonymous } from "../lib/util"
 import { makeProfile } from "../lib/profile"
 import { profileURL, absolutizeURL } from "../lib/url"
 import { toggleFollowComment } from "../util/api_actions"
-import { useCommentVoting } from "../hooks/comments"
+import { useCommentVoting, useCommentModeration } from "../hooks/comments"
 
 import type {
-  GenericComment,
   CommentInTree,
   MoreCommentsInTree,
   Post
@@ -39,9 +40,6 @@ export default function Comment(props) {
     isModerator,
     reportComment,
     moderationUI,
-    ignoreCommentReports,
-    curriedDropdownMenufunc,
-    dropdownMenus,
     useSearchPageUI,
     atMaxDepth,
     children,
@@ -53,31 +51,40 @@ export default function Comment(props) {
   const [replying, setReplying] = useState(false)
   const [commentMenuOpen, setCommentMenuOpen] = useState(false)
   const [commentShareOpen, setCommentShareOpen] = useState(false)
-  const [commentRemoveDialogOpen, setCommentRemoveDialogOpen] = useState(false)
 
   const dispatch = useDispatch()
   const toggleFollowCommentCB = useCallback(toggleFollowComment(dispatch), [
     dispatch
   ])
 
+  const {
+    commentRemoveDialogOpen,
+    setCommentRemoveDialogOpen,
+    ignoreReports,
+    removeComment,
+    approveComment
+  } = useCommentModeration(shouldGetReports, channelName)
+
   const [upvote, downvote] = useCommentVoting()
 
   return (
     <div className={`comment ${comment.removed ? "removed" : ""}`}>
-      { showRemoveCommentDialog ? <Dialog
-        id="remove-comment-dialog"
-        open={showRemoveCommentDialog}
-        onAccept={this.removeComment}
-        hideDialog={this.hideCommentDialog}
-        submitText="Yes, remove"
-        title="Remove Comment"
-      >
-        <p>
-          Are you sure? You will still be able to see the comment, but it
-          will be deleted for normal users. You can undo this later by
-          clicking "approve".
-    </p>
-  </Dialog> : null }
+      {commentRemoveDialogOpen ? (
+        <Dialog
+          id="remove-comment-dialog"
+          open={commentRemoveDialogOpen}
+          onAccept={() => removeComment(comment)}
+          hideDialog={() => setCommentRemoveDialogOpen(false)}
+          submitText="Yes, remove"
+          title="Remove Comment"
+        >
+          <p>
+            Are you sure? You will still be able to see the comment, but it will
+            be deleted for normal users. You can undo this later by clicking
+            "approve".
+          </p>
+        </Dialog>
+      ) : null}
       <Card>
         <Link to={profileURL(comment.author_id)}>
           <ProfileImage
@@ -224,12 +231,12 @@ export default function Comment(props) {
                         </div>
                       </li>
                     ) : null}
-                    {comment.num_reports && ignoreCommentReports ? (
+                    {comment.num_reports && ignoreReports ? (
                       <li>
                         <div
                           className="comment-action-button ignore-button"
                           onClick={preventDefaultAndInvoke(() =>
-                            ignoreCommentReports(comment)
+                            ignoreReports(comment)
                           )}
                         >
                           <a href="#">Ignore reports</a>
@@ -239,7 +246,7 @@ export default function Comment(props) {
                     <li>
                       <CommentRemovalForm
                         comment={comment}
-                        remove={removeComment}
+                        remove={() => setCommentRemoveDialogOpen(true)}
                         approve={approveComment}
                         isModerator={isModerator}
                       />

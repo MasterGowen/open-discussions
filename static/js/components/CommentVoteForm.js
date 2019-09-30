@@ -17,8 +17,6 @@ import type { CommentInTree } from "../flow/discussionTypes"
 
 type Props = {
   comment: CommentInTree,
-  upvote: CommentVoteFunc,
-  downvote: CommentVoteFunc
 }
 
 export default function CommentVoteForm(props: Props) {
