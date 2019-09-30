@@ -3,6 +3,9 @@ import { useCallback, useState } from "react"
 import { useDispatch } from "react-redux"
 
 import { actions } from "../actions"
+import { approveComment, removeComment } from "../util/api_actions"
+import { setSnackbarMessage } from "../actions/ui"
+import { actions } from "../actions"
 
 export const useCommentVoting = () => {
   const dispatch = useDispatch()
@@ -34,4 +37,60 @@ export const useCommentVoting = () => {
   )
 
   return {upvote, upvoting, downvote, downvoting}
+}
+
+export const useCommentModeration = (shouldGetReports, channelName) => {
+  const dispatch = useDispatch()
+
+  const approveComment = useCallback(
+    async (comment: CommentInTree) => {
+      await approveComment(dispatch, comment)
+      if (shouldGetReports) {
+        await dispatch(actions.reports.get(channelName))
+      }
+      dispatch(
+        setSnackbarMessage({
+          message: "Comment has been approved"
+        })
+      )
+    },
+    [dispatch]
+  )
+
+  const removeComment = useCallback(
+    async (event: Event) => {
+      const {
+        dispatch,
+        focusedComment,
+        channelName,
+        shouldGetReports
+      } = this.props
+      event.preventDefault()
+
+      await removeComment(dispatch, focusedComment)
+      if (shouldGetReports) {
+        await dispatch(actions.reports.get(channelName))
+      }
+
+      this.hideCommentDialog()
+      dispatch(
+        setSnackbarMessage({
+          message: "Comment has been removed"
+        })
+      )
+    }
+
+ignoreReports = async (comment: CommentInTree) => {
+      const { dispatch, channelName, shouldGetReports } = this.props
+
+      await dispatch(
+        actions.comments.patch(comment.id, { ignore_reports: true })
+      )
+      if (shouldGetReports) {
+        await dispatch(actions.reports.get(channelName))
+      }
+    }
+
+
+
 }

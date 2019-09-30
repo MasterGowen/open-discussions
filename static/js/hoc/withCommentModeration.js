@@ -4,7 +4,6 @@ import React from "react"
 
 import Dialog from "../components/Dialog"
 
-import { actions } from "../actions"
 import {
   setSnackbarMessage,
   showDialog,

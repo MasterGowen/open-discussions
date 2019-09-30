@@ -128,6 +128,7 @@ export class ChannelModerationPage extends React.Component<Props> {
           isPrivateChannel={isPrivate(channel)}
           dropdownMenus={dropdownMenus}
           curriedDropdownMenufunc={dropdownMenuFuncs(dispatch)}
+          shouldGetReports
         />
       )
     }

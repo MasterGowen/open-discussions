@@ -19,11 +19,7 @@ import { renderTextContent } from "./Markdown"
 import { preventDefaultAndInvoke, userIsAnonymous } from "../lib/util"
 import { makeProfile } from "../lib/profile"
 import { profileURL, absolutizeURL } from "../lib/url"
-import {
-  toggleUpvote,
-  toggleFollowPost,
-  toggleFollowComment
-} from "../util/api_actions"
+import { toggleFollowComment } from "../util/api_actions"
 import { useCommentVoting } from "../hooks/comments"
 
 import type {
@@ -32,16 +28,12 @@ import type {
   MoreCommentsInTree,
   Post
 } from "../flow/discussionTypes"
-import type { CommentRemoveFunc } from "./CommentRemovalForm"
-import type { CommentVoteFunc } from "./CommentVoteForm"
 
 export default function Comment(props) {
   const {
     commentPermalink,
     post,
     comment,
-    approve,
-    remove,
     deleteComment,
     isPrivateChannel,
     isModerator,
@@ -52,13 +44,16 @@ export default function Comment(props) {
     dropdownMenus,
     useSearchPageUI,
     atMaxDepth,
-    children
+    children,
+    shouldGetReports,
+    channelName
   } = props
 
   const [editing, setEditing] = useState(false)
   const [replying, setReplying] = useState(false)
   const [commentMenuOpen, setCommentMenuOpen] = useState(false)
   const [commentShareOpen, setCommentShareOpen] = useState(false)
+  const [commentRemoveDialogOpen, setCommentRemoveDialogOpen] = useState(false)
 
   const dispatch = useDispatch()
   const toggleFollowCommentCB = useCallback(toggleFollowComment(dispatch), [
@@ -69,6 +64,20 @@ export default function Comment(props) {
 
   return (
     <div className={`comment ${comment.removed ? "removed" : ""}`}>
+      { showRemoveCommentDialog ? <Dialog
+        id="remove-comment-dialog"
+        open={showRemoveCommentDialog}
+        onAccept={this.removeComment}
+        hideDialog={this.hideCommentDialog}
+        submitText="Yes, remove"
+        title="Remove Comment"
+      >
+        <p>
+          Are you sure? You will still be able to see the comment, but it
+          will be deleted for normal users. You can undo this later by
+          clicking "approve".
+    </p>
+  </Dialog> : null }
       <Card>
         <Link to={profileURL(comment.author_id)}>
           <ProfileImage
@@ -230,8 +239,8 @@ export default function Comment(props) {
                     <li>
                       <CommentRemovalForm
                         comment={comment}
-                        remove={remove}
-                        approve={approve}
+                        remove={removeComment}
+                        approve={approveComment}
                         isModerator={isModerator}
                       />
                     </li>
