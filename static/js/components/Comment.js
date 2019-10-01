@@ -57,12 +57,16 @@ export default function Comment(props) {
     dispatch
   ])
 
+
   const {
     commentRemoveDialogOpen,
     setCommentRemoveDialogOpen,
+    commentDeleteDialogOpen,
+    setCommentDeleteDialogOpen,
     ignoreReports,
     removeComment,
-    approveComment
+    approveComment,
+    deleteComment
   } = useCommentModeration(shouldGetReports, channelName)
 
   const [upvote, downvote] = useCommentVoting()
@@ -85,6 +89,18 @@ export default function Comment(props) {
           </p>
         </Dialog>
       ) : null}
+      {commentDeleteDialogOpen ? <Dialog
+        open={commentDeleteDialogVisible}
+        hideDialog={this.hideCommentDialog(DELETE_COMMENT_DIALOG)}
+        onAccept={async () => {
+          await this.deleteComment()
+          this.hideCommentDialog(DELETE_COMMENT_DIALOG)()
+        }}
+        title="Delete Comment"
+        submitText="Yes, Delete"
+      >
+        Are you sure you want to delete this comment?
+      </Dialog>
       <Card>
         <Link to={profileURL(comment.author_id)}>
           <ProfileImage
