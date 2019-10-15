@@ -6,7 +6,7 @@ import { actions } from "../actions"
 import * as apiActions from "../util/api_actions"
 import { setSnackbarMessage } from "../actions/ui"
 
-export const useCommentVoting = () => {
+export function useCommentVoting () {
   const dispatch = useDispatch()
   const [upvoting, setUpvoting] = useState(false)
   const [downvoting, setDownvoting] = useState(false)

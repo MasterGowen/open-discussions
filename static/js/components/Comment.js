@@ -66,8 +66,6 @@ export default function Comment(props) {
     deleteComment
   } = useCommentModeration(shouldGetReports, channelName)
 
-  const [upvote, downvote] = useCommentVoting()
-
   return (
     <div className={`comment ${comment.removed ? "removed" : ""}`}>
       {commentRemoveDialogOpen ? (
@@ -88,11 +86,11 @@ export default function Comment(props) {
       ) : null}
       {commentDeleteDialogOpen ? (
         <Dialog
-          open={commentDeleteDialogVisible}
-          hideDialog={this.hideCommentDialog(DELETE_COMMENT_DIALOG)}
+          open={commentDeleteDialogOpen}
+          hideDialog={() => setCommentDeleteDialogOpen(false)}
           onAccept={async () => {
             await this.deleteComment()
-            this.hideCommentDialog(DELETE_COMMENT_DIALOG)()
+            setCommentDeleteDialogOpen(false)
           }}
           title="Delete Comment"
           submitText="Yes, Delete"
@@ -155,13 +153,9 @@ export default function Comment(props) {
             </div>
           ) : null}
           <div className="row comment-actions">
-            {upvote && downvote ? (
               <CommentVoteForm
                 comment={comment}
-                upvote={upvote}
-                downvote={downvote}
               />
-            ) : null}
             {atMaxDepth ||
             moderationUI ||
             comment.deleted ||
@@ -181,7 +175,6 @@ export default function Comment(props) {
                 <div className="share-button-wrapper">
                   <div
                     className="comment-action-button share-button"
-                    onClick={() => setCommentShareOpen(true)}
                   >
                     share
                   </div>

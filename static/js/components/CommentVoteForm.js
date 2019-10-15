@@ -1,5 +1,5 @@
 // @flow
-import React, { useState } from "react"
+import React from "react"
 
 import LoginTooltip from "./LoginTooltip"
 
@@ -30,7 +30,7 @@ export default function CommentVoteForm(props: Props) {
         <button
           className={`vote upvote-button ${upvoted ? "upvoted" : ""}`}
           onClick={
-            userIsAnonymous() ? () => setPopupVisible(true) : this.upvote
+            userIsAnonymous() ? null : () => upvote(comment)
           }
           disabled={disabled}
         >
@@ -50,7 +50,7 @@ export default function CommentVoteForm(props: Props) {
         <button
           className={`vote downvote-button ${downvoted ? "downvoted" : ""}`}
           onClick={
-            userIsAnonymous() ? () => setPopupVisible(false) : this.downvote
+            userIsAnonymous() ? null : () => downvote(comment)
           }
           disabled={disabled}
         >
