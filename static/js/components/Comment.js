@@ -15,7 +15,7 @@ import CommentRemovalForm from "./CommentRemovalForm"
 import ProfileImage, { PROFILE_IMAGE_MICRO } from "./ProfileImage"
 import DropdownMenu from "../components/DropdownMenu"
 import ReplyButton from "./ReplyButton"
-import SharePopup from "./SharePopup"
+import ShareTooltip from "./ShareTooltip"
 import { renderTextContent } from "./Markdown"
 
 import { preventDefaultAndInvoke, userIsAnonymous } from "../lib/util"
@@ -49,7 +49,6 @@ export default function Comment(props) {
   const [editing, setEditing] = useState(false)
   const [replying, setReplying] = useState(false)
   const [commentMenuOpen, setCommentMenuOpen] = useState(false)
-  const [commentShareOpen, setCommentShareOpen] = useState(false)
 
   const dispatch = useDispatch()
   const toggleFollowCommentCB = useCallback(toggleFollowComment(dispatch), [
@@ -175,21 +174,19 @@ export default function Comment(props) {
                 />
               )}
             {useSearchPageUI ? null : (
-              <div className="share-button-wrapper">
-                <div
-                  className="comment-action-button share-button"
-                  onClick={() => setCommentShareOpen(true)}
-                >
-                  share
+              <ShareTooltip
+                url={absolutizeURL(commentPermalink(comment.id))}
+                hideSocialButtons={isPrivateChannel}
+              >
+                <div className="share-button-wrapper">
+                  <div
+                    className="comment-action-button share-button"
+                    onClick={() => setCommentShareOpen(true)}
+                  >
+                    share
+                  </div>
                 </div>
-                {commentShareOpen ? (
-                  <SharePopup
-                    url={absolutizeURL(commentPermalink(comment.id))}
-                    closePopup={() => setCommentShareOpen(false)}
-                    hideSocialButtons={isPrivateChannel}
-                  />
-                ) : null}
-              </div>
+              </ShareTooltip>
             )}
             {!userIsAnonymous() && !useSearchPageUI ? (
               <div>
