@@ -105,8 +105,8 @@ export default function Comment(props) {
         <Link to={profileURL(comment.author_id)}>
           <ProfileImage
             profile={makeProfile({
-              name: comment.author_name,
-              username: SETTINGS.username,
+              name:                comment.author_name,
+              username:            SETTINGS.username,
               profile_image_small: comment.profile_image
             })}
             imageSize={PROFILE_IMAGE_MICRO}
@@ -167,13 +167,13 @@ export default function Comment(props) {
             moderationUI ||
             comment.deleted ||
             useSearchPageUI ? null : (
-              <ReplyButton
-                beginEditing={e => {
-                  e.preventDefault()
-                  setReplying(true)
-                }}
-              />
-            )}
+                <ReplyButton
+                  beginEditing={e => {
+                    e.preventDefault()
+                    setReplying(true)
+                  }}
+                />
+              )}
             {useSearchPageUI ? null : (
               <div className="share-button-wrapper">
                 <div
@@ -222,31 +222,31 @@ export default function Comment(props) {
                     )}
                     {SETTINGS.username === comment.author_id &&
                     !moderationUI ? (
-                      <li>
-                        <div
-                          className="comment-action-button edit-button"
-                          onClick={e => {
-                            e.preventDefault()
-                            setEditing(true)
-                          }}
-                        >
-                          <a href="#">Edit</a>
-                        </div>
-                      </li>
-                    ) : null}
+                        <li>
+                          <div
+                            className="comment-action-button edit-button"
+                            onClick={e => {
+                              e.preventDefault()
+                              setEditing(true)
+                            }}
+                          >
+                            <a href="#">Edit</a>
+                          </div>
+                        </li>
+                      ) : null}
                     {SETTINGS.username === comment.author_id &&
                     deleteComment ? (
-                      <li>
-                        <div
-                          className="comment-action-button delete-button"
-                          onClick={preventDefaultAndInvoke(() =>
-                            deleteComment(comment)
-                          )}
-                        >
-                          <a href="#">Delete</a>
-                        </div>
-                      </li>
-                    ) : null}
+                        <li>
+                          <div
+                            className="comment-action-button delete-button"
+                            onClick={preventDefaultAndInvoke(() =>
+                              deleteComment(comment)
+                            )}
+                          >
+                            <a href="#">Delete</a>
+                          </div>
+                        </li>
+                      ) : null}
                     {comment.num_reports && ignoreReports ? (
                       <li>
                         <div
@@ -270,17 +270,17 @@ export default function Comment(props) {
                     {moderationUI ||
                     userIsAnonymous() ||
                     !reportComment ? null : (
-                      <li>
-                        <div
-                          className="comment-action-button report-button"
-                          onClick={preventDefaultAndInvoke(() =>
-                            reportComment(comment)
-                          )}
-                        >
-                          <a href="#">Report</a>
-                        </div>
-                      </li>
-                    )}
+                        <li>
+                          <div
+                            className="comment-action-button report-button"
+                            onClick={preventDefaultAndInvoke(() =>
+                              reportComment(comment)
+                            )}
+                          >
+                            <a href="#">Report</a>
+                          </div>
+                        </li>
+                      )}
                   </DropdownMenu>
                 ) : null}
               </div>
@@ -336,13 +336,13 @@ const mapStateToProps = (state, ownProps) => {
     postDropdownMenuOpen,
     postShareMenuOpen,
     dropdownMenus,
-    profile: getOwnProfile(state),
+    profile:     getOwnProfile(state),
     isModerator: channel && channel.user_is_moderator,
     errored:
       anyErrorExcept404([posts, channels]) ||
       anyErrorExcept404or410([comments]),
     subscribedChannels: getSubscribedChannels(state),
-    commentInFlight: comments.processing,
-    embedly: embedlyResponse
+    commentInFlight:    comments.processing,
+    embedly:            embedlyResponse
   }
 }
