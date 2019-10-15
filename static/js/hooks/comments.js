@@ -5,8 +5,15 @@ import { useDispatch } from "react-redux"
 import { actions } from "../actions"
 import * as apiActions from "../util/api_actions"
 import { setSnackbarMessage } from "../actions/ui"
+import { formBeginEdit, formEndEdit } from "../actions/forms"
+import {
+  getReportForm,
+  onReportUpdate,
+  REPORT_CONTENT_NEW_FORM,
+  REPORT_CONTENT_PAYLOAD
+} from "../lib/reports"
 
-export function useCommentVoting () {
+export function useCommentVoting() {
   const dispatch = useDispatch()
   const [upvoting, setUpvoting] = useState(false)
   const [downvoting, setDownvoting] = useState(false)
@@ -41,6 +48,8 @@ export function useCommentVoting () {
 export const useCommentModeration = (shouldGetReports, channelName) => {
   const dispatch = useDispatch()
   const [commentRemoveDialogOpen, setCommentRemoveDialogOpen] = useState(false)
+  const [commentDeleteDialogOpen, setCommentDeleteDialogOpen] = useState(false)
+  const [commentReportDialogOpen, setCommentReportDialogOpen] = useState(false)
 
   const approveComment = useCallback(
     async (comment: CommentInTree) => {
@@ -99,12 +108,60 @@ export const useCommentModeration = (shouldGetReports, channelName) => {
     [dispatch]
   )
 
+  const showReportCommentDialog = useCallback(
+    (comment: CommentInTree) => {
+      dispatch(formBeginEdit({ ...REPORT_CONTENT_NEW_FORM }))
+      setCommentReportDialogOpen(true)
+    },
+    [dispatch]
+  )
+
+  const hideReportCommentDialog = useCallback(() => {
+    dispatch(formEndEdit({ ...REPORT_CONTENT_PAYLOAD }))
+    setCommentReportDialogOpen(false)
+  }, [dispatch])
+
+  const reportComment = useCallback(async comment => {
+    const { forms } = this.props
+    const form = getReportForm(forms)
+    const { reason } = form.value
+    const validation = validateContentReportForm(form)
+
+    if (!R.isEmpty(validation)) {
+      dispatch(
+        actions.forms.formValidate({
+          ...REPORT_CONTENT_PAYLOAD,
+          errors: validation.value
+        })
+      )
+    } else {
+      await dispatch(
+        actions.reports.post({
+          comment_id: focusedComment.id,
+          reason: reason
+        })
+      )
+      hideReportCommentDialog()
+      dispatch(
+        setSnackbarMessage({
+          message: "Comment has been reported"
+        })
+      )
+    }
+  })
+
   return {
     commentRemoveDialogOpen,
     setCommentRemoveDialogOpen,
+    commentDeleteDialogOpen,
+    setCommentDeleteDialogOpen,
     ignoreReports,
     removeComment,
     approveComment,
-    deleteComment
+    deleteComment,
+    reportComment,
+    showReportCommentDialog,
+  hideReportCommentDialog,
+  commentReportDialogOpen
   }
 }

@@ -212,30 +212,12 @@ export class PostPage extends React.Component<PostPageProps> {
     )
   }
 
-  showCommentDialog = R.curry((dialogKey: string, comment: CommentInTree) => {
-    const { dispatch } = this.props
-    dispatch(setFocusedComment(comment))
-    dispatch(showDialog(dialogKey))
-  })
 
   hideCommentDialog = (dialogKey: string) => () => {
     const { dispatch } = this.props
     dispatch(clearFocusedComment())
     dispatch(hideDialog(dialogKey))
   }
-
-  showReportCommentDialog = (comment: CommentInTree) => {
-    const { dispatch } = this.props
-    dispatch(formBeginEdit({ ...REPORT_CONTENT_NEW_FORM }))
-    this.showCommentDialog(REPORT_COMMENT_DIALOG, comment)
-  }
-
-  hideReportCommentDialog = () => {
-    const { dispatch } = this.props
-    dispatch(formEndEdit({ ...REPORT_CONTENT_PAYLOAD }))
-    this.hideCommentDialog(REPORT_COMMENT_DIALOG)()
-  }
-
   showPostDialog = (dialogKey: string) => () => {
     const { dispatch } = this.props
     dispatch(showDialog(dialogKey))
@@ -271,36 +253,7 @@ export class PostPage extends React.Component<PostPageProps> {
     )
   }
 
-  reportComment = async () => {
-    const { dispatch, focusedComment, forms } = this.props
-    const form = getReportForm(forms)
-    const { reason } = form.value
-    if (focusedComment) {
-      const validation = validateContentReportForm(form)
 
-      if (!R.isEmpty(validation)) {
-        dispatch(
-          actions.forms.formValidate({
-            ...REPORT_CONTENT_PAYLOAD,
-            errors: validation.value
-          })
-        )
-      } else {
-        await dispatch(
-          actions.reports.post({
-            comment_id: focusedComment.id,
-            reason:     reason
-          })
-        )
-        this.hideReportCommentDialog()
-        dispatch(
-          setSnackbarMessage({
-            message: "Comment has been reported"
-          })
-        )
-      }
-    }
-  }
 
   renderCommentSectionHeader = () => {
     const {
@@ -416,8 +369,6 @@ export class PostPage extends React.Component<PostPageProps> {
             downvote={this.downvote}
             approve={approveComment}
             remove={removeComment}
-            deleteComment={this.showCommentDialog(DELETE_COMMENT_DIALOG)}
-            reportComment={this.showReportCommentDialog}
             isModerator={isModerator}
             loadMoreComments={this.loadMoreComments}
             beginEditing={beginEditing(dispatch)}
@@ -434,18 +385,6 @@ export class PostPage extends React.Component<PostPageProps> {
           />
         ) : null}
         <Dialog
-          open={commentDeleteDialogVisible}
-          hideDialog={this.hideCommentDialog(DELETE_COMMENT_DIALOG)}
-          onAccept={async () => {
-            await this.deleteComment()
-            this.hideCommentDialog(DELETE_COMMENT_DIALOG)()
-          }}
-          title="Delete Comment"
-          submitText="Yes, Delete"
-        >
-          Are you sure you want to delete this comment?
-        </Dialog>
-        <Dialog
           open={postDeleteDialogVisible}
           hideDialog={hidePostDialog}
           onAccept={async () => {
@@ -456,26 +395,6 @@ export class PostPage extends React.Component<PostPageProps> {
           submitText="Yes, Delete"
         >
           Are you sure you want to delete this post?
-        </Dialog>
-        <Dialog
-          open={commentReportDialogVisible}
-          hideDialog={this.hideReportCommentDialog}
-          onCancel={this.hideReportCommentDialog}
-          onAccept={this.reportComment}
-          validateOnClick={true}
-          title="Report Comment"
-          submitText="Yes, Report"
-          id="report-comment-dialog"
-        >
-          {reportForm ? (
-            <ReportForm
-              reportForm={reportForm.value}
-              validation={reportForm.errors}
-              onUpdate={onReportUpdate(dispatch)}
-              description="Are you sure you want to report this comment for violating the rules of this site?"
-              label="Why are you reporting this comment?"
-            />
-          ) : null}
         </Dialog>
       </div>
     )

@@ -63,7 +63,10 @@ export default function Comment(props) {
     ignoreReports,
     removeComment,
     approveComment,
-    deleteComment
+    deleteComment,
+    commentReportDialogOpen,
+    showReportCommentDialog,
+    hideReportCommentDialog
   } = useCommentModeration(shouldGetReports, channelName)
 
   return (
@@ -89,7 +92,7 @@ export default function Comment(props) {
           open={commentDeleteDialogOpen}
           hideDialog={() => setCommentDeleteDialogOpen(false)}
           onAccept={async () => {
-            await this.deleteComment()
+            await deleteComment(comment, post)
             setCommentDeleteDialogOpen(false)
           }}
           title="Delete Comment"
@@ -98,6 +101,28 @@ export default function Comment(props) {
           Are you sure you want to delete this comment?
         </Dialog>
       ) : null}
+      {commentReportDialogOpen ?  (
+        <Dialog
+          open={commentReportDialogOpen}
+          hideDialog={hideReportCommentDialog}
+          onCancel={hideReportCommentDialog}
+          onAccept={() => reportComment(comment)}
+          validateOnClick={true}
+          title="Report Comment"
+          submitText="Yes, Report"
+          id="report-comment-dialog"
+        >
+          {reportForm ? (
+            <ReportForm
+              reportForm={reportForm.value}
+              validation={reportForm.errors}
+              onUpdate={onReportUpdate(dispatch)}
+              description="Are you sure you want to report this comment for violating the rules of this site?"
+              label="Why are you reporting this comment?"
+            />
+          ) : null}
+        </Dialog>
+      ) : null }
       <Card>
         <Link to={profileURL(comment.author_id)}>
           <ProfileImage
@@ -224,13 +249,12 @@ export default function Comment(props) {
                           </div>
                         </li>
                       ) : null}
-                    {SETTINGS.username === comment.author_id &&
-                    deleteComment ? (
+                    {SETTINGS.username === comment.author_id ?(
                         <li>
                           <div
                             className="comment-action-button delete-button"
                             onClick={preventDefaultAndInvoke(() =>
-                              deleteComment(comment)
+                              setCommentDeleteDialogOpen(true)
                             )}
                           >
                             <a href="#">Delete</a>
@@ -258,13 +282,13 @@ export default function Comment(props) {
                       />
                     </li>
                     {moderationUI ||
-                    userIsAnonymous() ||
-                    !reportComment ? null : (
+                    userIsAnonymous()
+? null : (
                         <li>
                           <div
                             className="comment-action-button report-button"
                             onClick={preventDefaultAndInvoke(() =>
-                              reportComment(comment)
+                              showReportCommentDialog(comment)
                             )}
                           >
                             <a href="#">Report</a>
