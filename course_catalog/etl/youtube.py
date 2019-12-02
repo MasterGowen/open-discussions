@@ -28,6 +28,7 @@ CONFIG_FILE_REPO = "mitodl/open-video-data"
 CONFIG_FILE_FOLDER = "youtube"
 YOUTUBE_API_SERVICE_NAME = "youtube"
 YOUTUBE_API_VERSION = "v3"
+DEFAULT_PLAYLIST_ID = '*'
 
 log = logging.getLogger()
 
@@ -45,6 +46,29 @@ def get_youtube_client():
         YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION, developerKey=developer_key
     )
 
+
+def get_all_playlists_for_channel(youtube_client, channel_id, upload_playlist_id):
+    playlist_ids = list(upload_playlist_id)
+
+    request = youtube_client.playlists().list(
+        part="id",
+        channelId=channel_id,
+        maxResults=50
+    )
+
+    while request is not None:
+        response = request.execute()
+        if response is None:
+            break
+
+        playlist_ids_batch = map(
+            lambda item: item["id"], response["items"]
+        )
+        playlist_ids.extend(playlist_ids_batch)
+
+        request = youtube_client.playlists().list_next(request, response)
+
+    return playlist_ids
 
 def extract_videos(youtube_client, video_ids):
     """
@@ -113,14 +137,14 @@ def extract_playlist_items(youtube_client, playlist_id):
         ) from exc
 
 
-def extract_playlists(youtube_client, playlist_configs):
+def extract_playlists(youtube_client, playlist_configs, upload_playlist_id):
     """
-    Extract a list of playlists
+    Extract a list of playlists for a channel
 
     Args:
         youtube_client (object): Youtube api client
         playlist_configs (list of dict): list of playlist configurations
-
+        upload_playlist (string): upload playlist id  for the channel
     Returns:
         A generator that yields playlist data
     """
@@ -128,7 +152,13 @@ def extract_playlists(youtube_client, playlist_configs):
     playlist_configs_by_id = {
         playlist_config["id"]: playlist_config for playlist_config in playlist_configs
     }
-    playlist_ids = playlist_configs_by_id.keys()
+
+    if DEFAULT_PLAYLIST_ID in playlist_configs_by_id:
+        all_playlist_ids_for_channel = get_all_playlists_for_channel(youtube_client, channel_id, upload_playlist_id)
+        playlist_ids = [id for id in playlist_ids if not playlist_configs_by_id[id].get("exclude", True)]
+    else:
+        playlist_ids = playlist_configs_by_id.keys()
+
 
     try:
         request = youtube_client.playlists().list(
@@ -143,7 +173,11 @@ def extract_playlists(youtube_client, playlist_configs):
 
             for playlist_data in response["items"]:
                 playlist_id = playlist_data["id"]
-                playlist_config = playlist_configs_by_id[playlist_id]
+                
+                if playlist_id in playlist_configs_by_id:
+                    playlist_config = playlist_configs_by_id[playlist_id] 
+                else:
+                    playlist_config = playlist_configs_by_id[DEFAULT_PLAYLIST_ID]
 
                 yield (
                     playlist_data,
@@ -179,7 +213,7 @@ def extract_channels(youtube_client, channels_config):
 
     try:
         request = youtube_client.channels().list(
-            part="snippet", id=",".join(channel_ids), maxResults=50
+            part="snippet,contentDetails", id=",".join(channel_ids), maxResults=50
         )
 
         while request is not None:
@@ -190,12 +224,13 @@ def extract_channels(youtube_client, channels_config):
 
             for channel_data in response["items"]:
                 channel_id = channel_data["id"]
+                upload_playlist_id = channel_data["contentDetails"]["relatedPlaylists"]["uploads"]
                 channel_config = channel_configs_by_ids[channel_id]
                 offered_by = channel_config.get("offered_by", None)
                 playlist_configs = channel_config.get("playlists", [])
 
                 # if we hit any error on a playlist, we simply abort
-                playlists = extract_playlists(youtube_client, playlist_configs)
+                playlists = extract_playlists(youtube_client, playlist_configs, upload_playlist_id)
                 yield (offered_by, channel_data, playlists)
 
             request = youtube_client.channels().list_next(request, response)
