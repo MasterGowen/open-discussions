@@ -90,6 +90,7 @@ def test_upcoming_courses_endpoint(client, kwargs, is_upcoming):
     """Test upcoming courses endpoint"""
     course = CourseFactory.create(runs=None)
     LearningResourceRunFactory.create(content_object=course, **kwargs)
+    LearningResourceRunFactory.create(content_object=course, **kwargs)
     # this should be filtered out
     CourseFactory.create(runs=None)
 
