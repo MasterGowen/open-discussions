@@ -22,8 +22,9 @@ from course_catalog.factories import (
     LearningResourceRunFactory,
 )
 from course_catalog.models import UserList, UserListItem
-from course_catalog.serializers import CourseTopicSerializer
+from course_catalog.serializers import CourseTopicSerializer, CourseSerializer
 from open_discussions.factories import UserFactory
+from open_discussions.test_utils import assert_json_equal
 
 # pylint:disable=redefined-outer-name
 
@@ -44,8 +45,16 @@ def test_list_course_endpoint(client):
     CourseFactory.create(runs=None)
 
     resp = client.get(reverse("courses-list"))
-    assert resp.data.get("count") == 1
-    assert resp.data.get("results")[0]["id"] == course.id
+
+    assert_json_equal(
+        resp.data,
+        {
+            "next": None,
+            "previous": None,
+            "count": 1,
+            "results": [CourseSerializer(course).data],
+        },
+    )
 
 
 def test_get_course_endpoint(client):
@@ -54,7 +63,7 @@ def test_get_course_endpoint(client):
 
     resp = client.get(reverse("courses-detail", args=[course.id]))
 
-    assert resp.data.get("course_id") == course.course_id
+    assert_json_equal(resp.data, CourseSerializer(course).data)
 
 
 def test_new_courses_endpoint(client):
@@ -65,8 +74,15 @@ def test_new_courses_endpoint(client):
 
     resp = client.get(reverse("courses-list") + "new/")
 
-    assert resp.data.get("count") == 1
-    assert resp.data.get("results")[0]["id"] == course.id
+    assert_json_equal(
+        resp.data,
+        {
+            "next": None,
+            "previous": None,
+            "count": 1,
+            "results": [CourseSerializer(course).data],
+        },
+    )
 
 
 @pytest.mark.parametrize("featured", [True, False])
@@ -78,9 +94,15 @@ def test_featured_courses_endpoint(client, featured):
 
     resp = client.get(reverse("courses-list") + "featured/")
 
-    assert resp.data.get("count") == (1 if featured else 0)
-    if featured:
-        assert resp.data.get("results")[0]["id"] == course.id
+    assert_json_equal(
+        resp.data,
+        {
+            "next": None,
+            "previous": None,
+            "count": 1 if featured else 0,
+            "results": [CourseSerializer(course).data] if featured else [],
+        },
+    )
 
 
 @pytest.mark.parametrize(
@@ -96,9 +118,15 @@ def test_upcoming_courses_endpoint(client, kwargs, is_upcoming):
 
     resp = client.get(reverse("courses-list") + "upcoming/")
 
-    assert resp.data.get("count") == (1 if is_upcoming else 0)
-    if is_upcoming:
-        assert resp.data.get("results")[0]["id"] == course.id
+    assert_json_equal(
+        resp.data,
+        {
+            "next": None,
+            "previous": None,
+            "count": 1 if is_upcoming else 0,
+            "results": [CourseSerializer(course).data] if is_upcoming else [],
+        },
+    )
 
 
 def test_course_detail_endpoint_lists(user_client, user):

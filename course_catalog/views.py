@@ -4,7 +4,7 @@ course_catalog views
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.db import IntegrityError
-from django.db.models import Prefetch, OuterRef, Exists
+from django.db.models import Prefetch, OuterRef, Exists, Subquery, Min, Q
 from django.utils import timezone
 from rest_framework import viewsets, status
 from rest_framework.decorators import action, api_view
@@ -117,31 +117,35 @@ class CourseViewSet(viewsets.ReadOnlyModelViewSet, FavoriteViewMixin):
     pagination_class = DefaultPagination
     permission_classes = (AnonymousAccessReadonlyPermission,)
 
-    def get_queryset(self):
-        """Generate a QuerySet for fetching valid courses"""
-        return (
-            Course.objects.annotate(
-                has_runs=Exists(
-                    LearningResourceRun.objects.filter(
-                        content_type=ContentType.objects.get_for_model(Course),
-                        object_id=OuterRef("pk"),
-                        published=True,
-                    )
+    @staticmethod
+    def _get_base_queryset():
+        return Course.objects.annotate(
+            has_runs=Exists(
+                LearningResourceRun.objects.filter(
+                    content_type=ContentType.objects.get_for_model(Course),
+                    object_id=OuterRef("pk"),
+                    published=True,
                 )
             )
-            .filter(has_runs=True, published=True)
-            .prefetch_related(
-                "topics",
-                Prefetch(
-                    "runs",
-                    queryset=LearningResourceRun.objects.prefetch_related(
-                        "topics", "prices", "instructors"
-                    )
-                    .filter(published=True)
-                    .order_by("-best_start_date"),
-                ),
-            )
+        ).filter(has_runs=True, published=True)
+
+    @staticmethod
+    def _prefetch_queryset(query):
+        return query.prefetch_related(
+            "topics",
+            Prefetch(
+                "runs",
+                queryset=LearningResourceRun.objects.prefetch_related(
+                    "topics", "prices", "instructors"
+                )
+                .filter(published=True)
+                .order_by("-best_start_date"),
+            ),
         )
+
+    def get_queryset(self):
+        """Generate a QuerySet for fetching valid courses"""
+        return self._prefetch_queryset(self._get_base_queryset())
 
     @action(methods=["GET"], detail=False)
     def new(self, request):
@@ -157,10 +161,28 @@ class CourseViewSet(viewsets.ReadOnlyModelViewSet, FavoriteViewMixin):
         """
         Get upcoming courses
         """
+        now = timezone.now()
         page = self.paginate_queryset(
-            self.get_queryset()
-            .filter(runs__start_date__gt=timezone.now())
-            .order_by("runs__start_date")
+            self._prefetch_queryset(
+                Course.objects.filter(
+                    published=True,
+                    pk=Subquery(
+                        LearningResourceRun.objects.filter(
+                            content_type=ContentType.objects.get_for_model(Course),
+                            start_date__gt=now,
+                            published=True,
+                        )
+                        .distinct("object_id")
+                        .values_list("object_id", flat=True)
+                    ),
+                )
+                .annotate(
+                    next_start_date=Min(
+                        "runs__start_date", filter=Q(runs__start_date__gt=now)
+                    )
+                )
+                .order_by("next_start_date")
+            )
         )
         serializer = self.get_serializer(page, many=True)
         return self.get_paginated_response(serializer.data)

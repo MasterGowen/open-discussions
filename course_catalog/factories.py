@@ -241,12 +241,12 @@ class LearningResourceRunFactory(AbstractCourseFactory):
 
         in_past = factory.Trait(
             enrollment_start=factory.Faker(
-                "date_time_between", end_date="-270d", tzinfo=pytz.utc
+                "date_time_between", start_date="-5y", end_date="-270d", tzinfo=pytz.utc
             )
         )
         in_future = factory.Trait(
             enrollment_start=factory.Faker(
-                "date_time_between", start_date="+15d", tzinfo=pytz.utc
+                "date_time_between", start_date="+15d", end_date="+1y", tzinfo=pytz.utc
             )
         )
 
