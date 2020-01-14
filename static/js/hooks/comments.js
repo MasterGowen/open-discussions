@@ -116,10 +116,13 @@ export const useCommentModeration = (shouldGetReports, channelName) => {
     [dispatch]
   )
 
-  const hideReportCommentDialog = useCallback(() => {
-    dispatch(formEndEdit({ ...REPORT_CONTENT_PAYLOAD }))
-    setCommentReportDialogOpen(false)
-  }, [dispatch])
+  const hideReportCommentDialog = useCallback(
+    () => {
+      dispatch(formEndEdit({ ...REPORT_CONTENT_PAYLOAD }))
+      setCommentReportDialogOpen(false)
+    },
+    [dispatch]
+  )
 
   const reportComment = useCallback(async comment => {
     const { forms } = this.props
@@ -138,7 +141,7 @@ export const useCommentModeration = (shouldGetReports, channelName) => {
       await dispatch(
         actions.reports.post({
           comment_id: focusedComment.id,
-          reason: reason
+          reason:     reason
         })
       )
       hideReportCommentDialog()
@@ -161,7 +164,7 @@ export const useCommentModeration = (shouldGetReports, channelName) => {
     deleteComment,
     reportComment,
     showReportCommentDialog,
-  hideReportCommentDialog,
-  commentReportDialogOpen
+    hideReportCommentDialog,
+    commentReportDialogOpen
   }
 }

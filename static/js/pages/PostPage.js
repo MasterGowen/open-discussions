@@ -212,7 +212,6 @@ export class PostPage extends React.Component<PostPageProps> {
     )
   }
 
-
   hideCommentDialog = (dialogKey: string) => () => {
     const { dispatch } = this.props
     dispatch(clearFocusedComment())
@@ -252,8 +251,6 @@ export class PostPage extends React.Component<PostPageProps> {
       })
     )
   }
-
-
 
   renderCommentSectionHeader = () => {
     const {

@@ -29,9 +29,7 @@ export default function CommentVoteForm(props: Props) {
       <LoginTooltip>
         <button
           className={`vote upvote-button ${upvoted ? "upvoted" : ""}`}
-          onClick={
-            userIsAnonymous() ? null : () => upvote(comment)
-          }
+          onClick={userIsAnonymous() ? null : () => upvote(comment)}
           disabled={disabled}
         >
           <img
@@ -49,9 +47,7 @@ export default function CommentVoteForm(props: Props) {
       <LoginTooltip>
         <button
           className={`vote downvote-button ${downvoted ? "downvoted" : ""}`}
-          onClick={
-            userIsAnonymous() ? null : () => downvote(comment)
-          }
+          onClick={userIsAnonymous() ? null : () => downvote(comment)}
           disabled={disabled}
         >
           <img

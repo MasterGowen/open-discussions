@@ -101,7 +101,7 @@ export default function Comment(props) {
           Are you sure you want to delete this comment?
         </Dialog>
       ) : null}
-      {commentReportDialogOpen ?  (
+      {commentReportDialogOpen ? (
         <Dialog
           open={commentReportDialogOpen}
           hideDialog={hideReportCommentDialog}
@@ -122,7 +122,7 @@ export default function Comment(props) {
             />
           ) : null}
         </Dialog>
-      ) : null }
+      ) : null}
       <Card>
         <Link to={profileURL(comment.author_id)}>
           <ProfileImage
@@ -178,9 +178,7 @@ export default function Comment(props) {
             </div>
           ) : null}
           <div className="row comment-actions">
-              <CommentVoteForm
-                comment={comment}
-              />
+            <CommentVoteForm comment={comment} />
             {atMaxDepth ||
             moderationUI ||
             comment.deleted ||
@@ -196,11 +194,10 @@ export default function Comment(props) {
               <ShareTooltip
                 url={absolutizeURL(commentPermalink(comment.id))}
                 hideSocialButtons={isPrivateChannel}
+                objectType="comment"
               >
                 <div className="share-button-wrapper">
-                  <div
-                    className="comment-action-button share-button"
-                  >
+                  <div className="comment-action-button share-button">
                     share
                   </div>
                 </div>
@@ -249,18 +246,18 @@ export default function Comment(props) {
                           </div>
                         </li>
                       ) : null}
-                    {SETTINGS.username === comment.author_id ?(
-                        <li>
-                          <div
-                            className="comment-action-button delete-button"
-                            onClick={preventDefaultAndInvoke(() =>
-                              setCommentDeleteDialogOpen(true)
-                            )}
-                          >
-                            <a href="#">Delete</a>
-                          </div>
-                        </li>
-                      ) : null}
+                    {SETTINGS.username === comment.author_id ? (
+                      <li>
+                        <div
+                          className="comment-action-button delete-button"
+                          onClick={preventDefaultAndInvoke(() =>
+                            setCommentDeleteDialogOpen(true)
+                          )}
+                        >
+                          <a href="#">Delete</a>
+                        </div>
+                      </li>
+                    ) : null}
                     {comment.num_reports && ignoreReports ? (
                       <li>
                         <div
@@ -281,20 +278,18 @@ export default function Comment(props) {
                         isModerator={isModerator}
                       />
                     </li>
-                    {moderationUI ||
-                    userIsAnonymous()
-? null : (
-                        <li>
-                          <div
-                            className="comment-action-button report-button"
-                            onClick={preventDefaultAndInvoke(() =>
-                              showReportCommentDialog(comment)
-                            )}
-                          >
-                            <a href="#">Report</a>
-                          </div>
-                        </li>
-                      )}
+                    {moderationUI || userIsAnonymous() ? null : (
+                      <li>
+                        <div
+                          className="comment-action-button report-button"
+                          onClick={preventDefaultAndInvoke(() =>
+                            showReportCommentDialog(comment)
+                          )}
+                        >
+                          <a href="#">Report</a>
+                        </div>
+                      </li>
+                    )}
                   </DropdownMenu>
                 ) : null}
               </div>
