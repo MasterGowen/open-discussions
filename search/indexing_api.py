@@ -135,6 +135,7 @@ LEARNING_RESOURCE_TYPE = {
             "published": {"type": "boolean"},
             "availability": {"type": "keyword"},
             "offered_by": {"type": "keyword"},
+            "full_content": ENGLISH_TEXT_FIELD,
         },
     },
 }

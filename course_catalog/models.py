@@ -138,6 +138,19 @@ class LearningResourceRun(AbstractCourse):
         return f"LearningResourceRun platform={self.platform} run_id={self.run_id}"
 
 
+class LearningResourceFile(TimestampedModel):
+    """
+    LearningResourceFile model for courserun files
+    """
+
+    key = models.CharField(unique=True, max_length=1024)
+    run = models.ForeignKey(
+        LearningResourceRun, related_name="files", on_delete=models.CASCADE
+    )
+    full_content = models.TextField(null=True, blank=True)
+    phrases = models.TextField(null=True, blank=True)
+
+
 class Course(AbstractCourse):
     """
     Course model for courses on all platforms

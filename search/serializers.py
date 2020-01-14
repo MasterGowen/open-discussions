@@ -310,6 +310,13 @@ class ESRunSerializer(LearningResourceSerializer):
     prices = ESCoursePriceSerializer(many=True)
     instructors = serializers.SerializerMethodField()
     availability = serializers.SerializerMethodField()
+    file_content = serializers.SerializerMethodField()
+
+    def get_file_content(self, instance):
+        """
+        Get all the run's file content
+        """
+        return " ".join(file.full_content for file in instance.files.iterator())
 
     def get_instructors(self, instance):
         """
@@ -355,6 +362,7 @@ class ESRunSerializer(LearningResourceSerializer):
             "published",
             "availability",
             "offered_by",
+            "file_content",
         ]
         ordering = "-best_start_date"
         read_only_fields = fields

@@ -1,9 +1,14 @@
 """
 course_catalog api functions
 """
+import pdftotext
 from datetime import datetime
 import json
 import logging
+
+
+from nltk import ngrams
+from collections import Counter
 
 import boto3
 from django.db import transaction
@@ -19,7 +24,12 @@ from course_catalog.constants import (
     OfferedBy,
 )
 from course_catalog.etl.loaders import load_offered_bys
-from course_catalog.models import Bootcamp, LearningResourceRun, Course
+from course_catalog.models import (
+    Bootcamp,
+    LearningResourceRun,
+    Course,
+    LearningResourceFile,
+)
 from course_catalog.serializers import (
     BootcampSerializer,
     OCWSerializer,
@@ -507,3 +517,61 @@ def sync_ocw_data(*, force_overwrite, upload_to_s3):
             upsert_course(course.id)
         else:
             delete_course(course)
+
+
+def extract_common_phrases(text):
+    result = []
+    # Since you are not considering periods and treats words with - as phrases
+    text = text.replace(".", "").replace("-", " ").replace("\n", " ")
+
+    for n in range(len(text.split(" ")), 1, -1):
+        phrases = []
+
+        for token in ngrams(sentence.split(), n):
+            phrases.append(" ".join(token))
+
+        phrase, freq = Counter(phrases).most_common(1)[0]
+        if freq > 1:
+            result.append((phrase, n))
+            sentence = sentence.replace(phrase, "")
+
+    return sorted()
+
+
+def sync_ocw_files(ids=None):
+    """
+
+    Args:
+        ids(list of int or None): list of course ids to process, all if None
+    """
+    raw_data_bucket = boto3.resource(
+        "s3",
+        aws_access_key_id=settings.OCW_LEARNING_COURSE_ACCESS_KEY,
+        aws_secret_access_key=settings.OCW_LEARNING_COURSE_SECRET_ACCESS_KEY,
+    ).Bucket(name=settings.OCW_LEARNING_COURSE_BUCKET_NAME)
+
+    courses = Course.objects.filter(platform="ocw")
+    if ids is not None:
+        courses = courses.filter(id__in=ids)
+    for course in courses.iterator():
+        runs = course.runs.exclude(url="")
+        for run in runs.iterator():
+            prefix = run.url.split("/")[-1]
+            for course_file in raw_data_bucket.objects.filter(Prefix=prefix):
+                extension = course_file.key.split(".")[-1].lower()
+                if extension in ["pdf", "htm", "html", "txt"]:
+                    print("PROCESSING {}".format(course_file.key))
+                    body = (
+                        raw_data_bucket.Object(course_file.key).get().get("Body", None)
+                    )
+                    if extension == "pdf":
+                        pdf = pdftotext.PDF(body)
+                        fulltext = "\n\n".join(pdf)
+                    else:
+                        fulltext = body
+                    LearningResourceFile.objects.update_or_create(
+                        run=run,
+                        key=course_file.key,
+                        defaults={"full_content": fulltext},
+                    )
+        upsert_course(course.id)
