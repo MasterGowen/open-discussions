@@ -550,7 +550,7 @@ def sync_ocw_files(ids=None):
         aws_secret_access_key=settings.OCW_LEARNING_COURSE_SECRET_ACCESS_KEY,
     ).Bucket(name=settings.OCW_LEARNING_COURSE_BUCKET_NAME)
 
-    courses = Course.objects.filter(platform="ocw")
+    courses = Course.objects.filter(platform="ocw").filter(runs__files__isnull=True)
     if ids is not None:
         courses = courses.filter(id__in=ids)
     for course in courses.iterator():
@@ -558,20 +558,23 @@ def sync_ocw_files(ids=None):
         for run in runs.iterator():
             prefix = run.url.split("/")[-1]
             for course_file in raw_data_bucket.objects.filter(Prefix=prefix):
-                extension = course_file.key.split(".")[-1].lower()
-                if extension in ["pdf", "htm", "html", "txt"]:
-                    print("PROCESSING {}".format(course_file.key))
-                    body = (
-                        raw_data_bucket.Object(course_file.key).get().get("Body", None)
-                    )
-                    if extension == "pdf":
-                        pdf = pdftotext.PDF(body)
-                        fulltext = "\n\n".join(pdf)
-                    else:
-                        fulltext = body
-                    LearningResourceFile.objects.update_or_create(
-                        run=run,
-                        key=course_file.key,
-                        defaults={"full_content": fulltext},
-                    )
+                try:
+                    extension = course_file.key.split(".")[-1].lower()
+                    if extension in ["pdf", "htm", "html", "txt"]:
+                        print("PROCESSING {}".format(course_file.key))
+                        body = (
+                            raw_data_bucket.Object(course_file.key).get().get("Body", None)
+                        )
+                        if extension == "pdf":
+                            pdf = pdftotext.PDF(body)
+                            fulltext = "\n\n".join(pdf)
+                        else:
+                            fulltext = body
+                        LearningResourceFile.objects.update_or_create(
+                            run=run,
+                            key=course_file.key,
+                            defaults={"full_content": fulltext},
+                        )
+                except:
+                    print("ERROR with {}".format(course_file.key))
         upsert_course(course.id)

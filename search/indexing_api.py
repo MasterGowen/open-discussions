@@ -135,7 +135,14 @@ LEARNING_RESOURCE_TYPE = {
             "published": {"type": "boolean"},
             "availability": {"type": "keyword"},
             "offered_by": {"type": "keyword"},
-            "full_content": ENGLISH_TEXT_FIELD,
+            "files": {
+                "type": "nested",
+                "properties": {
+                    "run_id": {"type": "long"},
+                    "key": {"type": "keyword"},
+                    "full_content": ENGLISH_TEXT_FIELD
+                }
+            }
         },
     },
 }

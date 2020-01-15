@@ -143,12 +143,15 @@ class LearningResourceFile(TimestampedModel):
     LearningResourceFile model for courserun files
     """
 
-    key = models.CharField(unique=True, max_length=1024)
+    key = models.CharField(max_length=1024)
     run = models.ForeignKey(
         LearningResourceRun, related_name="files", on_delete=models.CASCADE
     )
     full_content = models.TextField(null=True, blank=True)
     phrases = models.TextField(null=True, blank=True)
+
+    class Meta:
+        unique_together = (("key", "run"),)
 
 
 class Course(AbstractCourse):

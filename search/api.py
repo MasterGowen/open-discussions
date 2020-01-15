@@ -216,7 +216,7 @@ def _apply_learning_query_filters(search, user):
     )
     if not user.is_anonymous:
         user_list_filter = user_list_filter | Q("term", author=user.id)
-
+    search = search.source(excludes=["runs.files.full_content"])
     return search.filter(user_list_filter)
 
 

@@ -493,11 +493,21 @@ def start_recreate_index(self):
             + [
                 index_courses.si(ids)
                 for ids in chunks(
-                    Course.objects.filter(published=True)
+                    Course.objects.filter(published=True).exclude(platform="ocw")
                     .exclude(course_id__in=blacklisted_ids)
                     .order_by("id")
                     .values_list("id", flat=True),
                     chunk_size=settings.ELASTICSEARCH_INDEXING_CHUNK_SIZE,
+                )
+            ]
+            + [
+                index_courses.si(ids)
+                for ids in chunks(
+                    Course.objects.filter(published=True).filter(platform="ocw")
+                        .exclude(course_id__in=blacklisted_ids)
+                        .order_by("id")
+                        .values_list("id", flat=True),
+                    chunk_size=1,
                 )
             ]
             + [

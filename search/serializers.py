@@ -15,7 +15,7 @@ from course_catalog.models import (
     Program,
     UserList,
     Video,
-)
+    LearningResourceFile)
 from profiles.api import get_channels, get_channel_join_dates
 from profiles.models import Profile
 from profiles.utils import image_uri
@@ -302,6 +302,16 @@ class LearningResourceSerializer(serializers.ModelSerializer):
     topics = ESTopicsField()
 
 
+class ESRunFileSerializer(serializers.ModelSerializer):
+    """
+    Elasticsearch serializer class for course run files
+    """
+
+    class Meta:
+        model = LearningResourceFile
+        fields = ["run_id", "key", "full_content"]
+
+
 class ESRunSerializer(LearningResourceSerializer):
     """
     Elasticsearch serializer class for course runs
@@ -310,13 +320,7 @@ class ESRunSerializer(LearningResourceSerializer):
     prices = ESCoursePriceSerializer(many=True)
     instructors = serializers.SerializerMethodField()
     availability = serializers.SerializerMethodField()
-    file_content = serializers.SerializerMethodField()
-
-    def get_file_content(self, instance):
-        """
-        Get all the run's file content
-        """
-        return " ".join(file.full_content for file in instance.files.iterator())
+    files = ESRunFileSerializer(many=True)
 
     def get_instructors(self, instance):
         """
@@ -362,7 +366,7 @@ class ESRunSerializer(LearningResourceSerializer):
             "published",
             "availability",
             "offered_by",
-            "file_content",
+            "files",
         ]
         ordering = "-best_start_date"
         read_only_fields = fields

@@ -164,8 +164,7 @@ export const RESOURCE_QUERY_NESTED_FIELDS = [
   "runs.year",
   "runs.semester",
   "runs.level",
-  "runs.instructors^5",
-  "runs.file_content"
+  "runs.instructors^5"
 ]
 
 const LIST_QUERY_FIELDS = [
@@ -590,7 +589,7 @@ export const buildLearnQuery = (
             }
           },
           [LR_TYPE_BOOTCAMP, LR_TYPE_COURSE, LR_TYPE_PROGRAM].includes(type)
-            ? {
+            ? ({
               nested: {
                 path:  "runs",
                 query: {
@@ -600,7 +599,19 @@ export const buildLearnQuery = (
                   }
                 }
               }
+            },
+            {
+              nested: {
+                path:  "runs.files",
+                query: {
+                  [queryType]: {
+                    query:  text,
+                    fields: ["runs.files.full_content"]
+                  }
+                }
+              }
             }
+            )
             : null
         ].filter(clause => clause !== null)
       }
