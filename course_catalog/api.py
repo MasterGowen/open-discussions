@@ -33,6 +33,7 @@ from search.task_helpers import (
     index_new_bootcamp,
     update_bootcamp,
 )
+from search.tasks import upsert_course_run_file
 
 log = logging.getLogger(__name__)
 
@@ -512,6 +513,7 @@ def sync_ocw_data(*, force_overwrite, upload_to_s3):
 
 def sync_ocw_files(ids=None):
     """
+    Sync all OCW course run files for a list of course ids to database
 
     Args:
         ids(list of int or None): list of course ids to process, all if None
@@ -531,24 +533,39 @@ def sync_ocw_files(ids=None):
             prefix = run.url.split("/")[-1]
             for course_file in raw_data_bucket.objects.filter(Prefix=prefix):
                 try:
-                    extension = course_file.key.split(".")[-1].lower()
-                    if extension in ["pdf", "htm", "html", "txt"]:
-                        print("PROCESSING {}".format(course_file.key))
-                        body = (
-                            raw_data_bucket.Object(course_file.key)
+                    data = (
+                        raw_data_bucket.Object(course_file.key)
                             .get()
                             .get("Body", None)
-                        )
-                        if extension == "pdf":
-                            pdf = pdftotext.PDF(body)
-                            fulltext = "\n\n".join(pdf)
-                        else:
-                            fulltext = body
-                        CourseRunFile.objects.update_or_create(
-                            run=run,
-                            key=course_file.key,
-                            defaults={"full_content": fulltext},
-                        )
-                except:
-                    print("ERROR with {}".format(course_file.key))
-        upsert_course(course.id)
+                    )
+                    sync_course_run_file(run, course_file.key, data)
+                except:  # pylint: disable=bare-except
+                    log.error("ERROR syncing %s", course_file.key)
+
+
+def sync_course_run_file(course_run, course_file_name, data):
+    """
+    Sync an OCW course run file to the database
+
+    Args:
+        course_run (LearningResourceRun): a LearningResourceRun for a Course
+        course_file_name (str): The name of the file
+        data (bytes or str): The content of the file
+
+    Returns:
+        CourseRunFile: the object that was created or updated
+    """
+    extension = course_file_name.split(".")[-1].lower()
+    if extension in ["pdf", "htm", "html", "txt"]:
+        if extension == "pdf":
+            pdf = pdftotext.PDF(data)
+            fulltext = "\n\n".join(pdf)
+        else:
+            fulltext = data
+        course_run_file, _ = CourseRunFile.objects.update_or_create(
+            run=course_run,
+            key=course_file_name,
+            defaults={"full_content": fulltext},
+        )
+        upsert_course_run_file(course_run_file.id)
+        return course_run_file

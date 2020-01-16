@@ -23,6 +23,7 @@ from course_catalog.models import (
 )
 from course_catalog.utils import load_course_blacklist
 from embedly.api import get_embedly_content
+from open_discussions import features
 from open_discussions.celery import app
 from open_discussions.utils import merge_strings, chunks, html_to_plain_text
 from profiles.models import Profile
@@ -225,7 +226,7 @@ def upsert_course(course_id):
 
 
 @app.task(**PARTIAL_UPDATE_TASK_SETTINGS)
-def upsert_course_file(file_id):
+def upsert_course_run_file(file_id):
     """Upsert course file based on stored database information"""
 
     course_file_obj = CourseRunFile.objects.get(id=file_id)
@@ -611,7 +612,7 @@ def start_recreate_index(self):
                     .values_list("id", flat=True),
                     chunk_size=settings.ELASTICSEARCH_INDEXING_CHUNK_SIZE,
                 )
-            ]
+            ] if features.is_enabled(features.COURSE_FILE_SEARCH) else [],
             + [
                 index_bootcamps.si(ids)
                 for ids in chunks(
