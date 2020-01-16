@@ -138,20 +138,20 @@ class LearningResourceRun(AbstractCourse):
         return f"LearningResourceRun platform={self.platform} run_id={self.run_id}"
 
 
-class LearningResourceFile(TimestampedModel):
+class CourseRunFile(TimestampedModel):
     """
-    LearningResourceFile model for courserun files
+    CourseRunFile model for courserun files
     """
 
     key = models.CharField(max_length=1024)
     run = models.ForeignKey(
-        LearningResourceRun, related_name="files", on_delete=models.CASCADE
+        LearningResourceRun, related_name="courserun_files", on_delete=models.CASCADE
     )
-    full_content = models.TextField(null=True, blank=True)
-    phrases = models.TextField(null=True, blank=True)
+    content = models.TextField(null=True, blank=True)
 
     class Meta:
         unique_together = (("key", "run"),)
+        verbose_name = "courserunfile"
 
 
 class Course(AbstractCourse):

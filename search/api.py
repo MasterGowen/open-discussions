@@ -87,6 +87,21 @@ def gen_course_id(platform, course_id):
     return "co_{}_{}".format(platform, safe_id)
 
 
+def gen_course_run_file_id(run_id, key):
+    """
+    Generates the Elasticsearch document id for a CourseRunFile
+
+    Args:
+        run_id (str): The run id of a CourseRunFile object
+        key (str): The key of a CourseRunFile object
+
+    Returns:
+        str: The Elasticsearch document id for this object
+    """
+    safe_key = urlsafe_b64encode(key.encode("utf-8")).decode("utf-8").rstrip("=")
+    return "cf_{}_{}".format(run_id, safe_key)
+
+
 def gen_bootcamp_id(bootcamp_id):
     """
     Generates the Elasticsearch document id for a bootcamp
@@ -216,7 +231,7 @@ def _apply_learning_query_filters(search, user):
     )
     if not user.is_anonymous:
         user_list_filter = user_list_filter | Q("term", author=user.id)
-    search = search.source(excludes=["runs.files.full_content"])
+
     return search.filter(user_list_filter)
 
 

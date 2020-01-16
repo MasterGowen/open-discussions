@@ -6,10 +6,6 @@ from datetime import datetime
 import json
 import logging
 
-
-from nltk import ngrams
-from collections import Counter
-
 import boto3
 from django.db import transaction
 from django.conf import settings
@@ -24,12 +20,7 @@ from course_catalog.constants import (
     OfferedBy,
 )
 from course_catalog.etl.loaders import load_offered_bys
-from course_catalog.models import (
-    Bootcamp,
-    LearningResourceRun,
-    Course,
-    LearningResourceFile,
-)
+from course_catalog.models import Bootcamp, LearningResourceRun, Course, CourseRunFile
 from course_catalog.serializers import (
     BootcampSerializer,
     OCWSerializer,
@@ -519,25 +510,6 @@ def sync_ocw_data(*, force_overwrite, upload_to_s3):
             delete_course(course)
 
 
-def extract_common_phrases(text):
-    result = []
-    # Since you are not considering periods and treats words with - as phrases
-    text = text.replace(".", "").replace("-", " ").replace("\n", " ")
-
-    for n in range(len(text.split(" ")), 1, -1):
-        phrases = []
-
-        for token in ngrams(sentence.split(), n):
-            phrases.append(" ".join(token))
-
-        phrase, freq = Counter(phrases).most_common(1)[0]
-        if freq > 1:
-            result.append((phrase, n))
-            sentence = sentence.replace(phrase, "")
-
-    return sorted()
-
-
 def sync_ocw_files(ids=None):
     """
 
@@ -563,14 +535,16 @@ def sync_ocw_files(ids=None):
                     if extension in ["pdf", "htm", "html", "txt"]:
                         print("PROCESSING {}".format(course_file.key))
                         body = (
-                            raw_data_bucket.Object(course_file.key).get().get("Body", None)
+                            raw_data_bucket.Object(course_file.key)
+                            .get()
+                            .get("Body", None)
                         )
                         if extension == "pdf":
                             pdf = pdftotext.PDF(body)
                             fulltext = "\n\n".join(pdf)
                         else:
                             fulltext = body
-                        LearningResourceFile.objects.update_or_create(
+                        CourseRunFile.objects.update_or_create(
                             run=run,
                             key=course_file.key,
                             defaults={"full_content": fulltext},

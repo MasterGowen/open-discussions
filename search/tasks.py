@@ -12,13 +12,22 @@ from prawcore.exceptions import PrawcoreException, NotFound
 
 from channels.constants import LINK_TYPE_LINK, POST_TYPE, COMMENT_TYPE
 from channels.models import Comment, Post
-from course_catalog.models import Course, Bootcamp, Program, UserList, Video
+from course_catalog.constants import PlatformType
+from course_catalog.models import (
+    Course,
+    Bootcamp,
+    Program,
+    UserList,
+    Video,
+    CourseRunFile,
+)
 from course_catalog.utils import load_course_blacklist
 from embedly.api import get_embedly_content
 from open_discussions.celery import app
 from open_discussions.utils import merge_strings, chunks, html_to_plain_text
 from profiles.models import Profile
 from search import indexing_api as api
+from search.api import gen_course_run_file_id
 from search.constants import (
     BOOTCAMP_TYPE,
     COURSE_TYPE,
@@ -36,6 +45,7 @@ from search.serializers import (
     ESProfileSerializer,
     ESVideoSerializer,
     ESUserListSerializer,
+    ESCourseRunFileSerializer,
 )
 
 User = get_user_model()
@@ -215,6 +225,21 @@ def upsert_course(course_id):
 
 
 @app.task(**PARTIAL_UPDATE_TASK_SETTINGS)
+def upsert_course_file(file_id):
+    """Upsert course file based on stored database information"""
+
+    course_file_obj = CourseRunFile.objects.get(id=file_id)
+    course_file_data = ESCourseRunFileSerializer(course_file_obj).data
+    api.upsert_document(
+        gen_course_run_file_id(course_file_obj.run_id, course_file_obj.key),
+        course_file_data,
+        COURSE_TYPE,
+        retry_on_conflict=settings.INDEXING_ERROR_RETRIES,
+        parent=course_file_obj.run.object_id,
+    )
+
+
+@app.task(**PARTIAL_UPDATE_TASK_SETTINGS)
 def upsert_bootcamp(bootcamp_id):
     """Upsert bootcamp based on stored database information"""
     from search.api import gen_bootcamp_id
@@ -371,6 +396,25 @@ def index_courses(ids):
 
 
 @app.task(autoretry_for=(RetryException,), retry_backoff=True, rate_limit="600/m")
+def index_course_files(ids):
+    """
+    Index course files
+
+    Args:
+        ids(list of int): List of course id's
+
+    """
+    try:
+        api.index_course_files(ids)
+    except (RetryException, Ignore):
+        raise
+    except:  # pylint: disable=bare-except
+        error = f"index_course_files threw an error"
+        log.exception(error)
+        return error
+
+
+@app.task(autoretry_for=(RetryException,), retry_backoff=True, rate_limit="600/m")
 def index_bootcamps(ids):
     """
     Index bootcamps
@@ -493,8 +537,55 @@ def start_recreate_index(self):
             + [
                 index_courses.si(ids)
                 for ids in chunks(
-                    Course.objects.filter(published=True).exclude(platform="ocw")
+                    Course.objects.filter(published=True)
                     .exclude(course_id__in=blacklisted_ids)
+                    .order_by("id")
+                    .values_list("id", flat=True),
+                    chunk_size=settings.ELASTICSEARCH_INDEXING_CHUNK_SIZE,
+                )
+            ]
+            + [
+                index_course_files.si(ids)
+                for ids in chunks(
+                    Course.objects.filter(published=True)
+                    .filter(platform=PlatformType.ocw)
+                    .exclude(course_id__in=blacklisted_ids)
+                    .order_by("id")
+                    .values_list("id", flat=True),
+                    chunk_size=settings.ELASTICSEARCH_INDEXING_CHUNK_SIZE,
+                )
+            ]
+            + [
+                index_bootcamps.si(ids)
+                for ids in chunks(
+                    Bootcamp.objects.filter(published=True)
+                    .order_by("id")
+                    .values_list("id", flat=True),
+                    chunk_size=settings.ELASTICSEARCH_INDEXING_CHUNK_SIZE,
+                )
+            ]
+            + [
+                index_programs.si(ids)
+                for ids in chunks(
+                    Program.objects.filter(published=True)
+                    .order_by("id")
+                    .values_list("id", flat=True),
+                    chunk_size=settings.ELASTICSEARCH_INDEXING_CHUNK_SIZE,
+                )
+            ]
+            + [
+                index_user_lists.si(ids)
+                for ids in chunks(
+                    UserList.objects.order_by("id")
+                    .exclude(items=None)
+                    .values_list("id", flat=True),
+                    chunk_size=settings.ELASTICSEARCH_INDEXING_CHUNK_SIZE,
+                )
+            ]
+            + [
+                index_videos.si(ids)
+                for ids in chunks(
+                    Video.objects.filter(published=True)
                     .order_by("id")
                     .values_list("id", flat=True),
                     chunk_size=settings.ELASTICSEARCH_INDEXING_CHUNK_SIZE,
@@ -503,11 +594,22 @@ def start_recreate_index(self):
             + [
                 index_courses.si(ids)
                 for ids in chunks(
-                    Course.objects.filter(published=True).filter(platform="ocw")
-                        .exclude(course_id__in=blacklisted_ids)
-                        .order_by("id")
-                        .values_list("id", flat=True),
-                    chunk_size=1,
+                    Course.objects.filter(published=True)
+                    .exclude(course_id__in=blacklisted_ids)
+                    .order_by("id")
+                    .values_list("id", flat=True),
+                    chunk_size=settings.ELASTICSEARCH_INDEXING_CHUNK_SIZE,
+                )
+            ]
+            + [
+                index_course_files.si(ids)
+                for ids in chunks(
+                    Course.objects.filter(published=True)
+                    .filter(platform="ocw")
+                    .exclude(course_id__in=blacklisted_ids)
+                    .order_by("id")
+                    .values_list("id", flat=True),
+                    chunk_size=settings.ELASTICSEARCH_INDEXING_CHUNK_SIZE,
                 )
             ]
             + [

@@ -589,7 +589,7 @@ export const buildLearnQuery = (
             }
           },
           [LR_TYPE_BOOTCAMP, LR_TYPE_COURSE, LR_TYPE_PROGRAM].includes(type)
-            ? ({
+            ? {
               nested: {
                 path:  "runs",
                 query: {
@@ -599,19 +599,20 @@ export const buildLearnQuery = (
                   }
                 }
               }
-            },
-            {
-              nested: {
-                path:  "runs.files",
+            }
+            : null,
+          type === LR_TYPE_COURSE
+            ? {
+              has_child: {
+                type:  "resourcefile",
                 query: {
                   [queryType]: {
                     query:  text,
-                    fields: ["runs.files.full_content"]
+                    fields: ["content"]
                   }
                 }
               }
             }
-            )
             : null
         ].filter(clause => clause !== null)
       }
