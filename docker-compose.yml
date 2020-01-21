@@ -20,6 +20,11 @@ services:
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
     ports:
       - "9101:9200"
+    command: >
+      /bin/sh -c './bin/elasticsearch-plugin list |
+      grep -q ingest-attachment ||
+      ./bin/elasticsearch-plugin install --batch ingest-attachment;
+      docker-entrypoint.sh elasticsearch'
 
   nginx:
     image: nginx
