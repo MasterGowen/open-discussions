@@ -23,12 +23,11 @@ from course_catalog.models import (
 )
 from course_catalog.utils import load_course_blacklist
 from embedly.api import get_embedly_content
-from open_discussions import features
 from open_discussions.celery import app
 from open_discussions.utils import merge_strings, chunks, html_to_plain_text
 from profiles.models import Profile
 from search import indexing_api as api
-from search.api import gen_course_run_file_id
+from search.api import gen_course_run_file_id, gen_course_id
 from search.constants import (
     BOOTCAMP_TYPE,
     COURSE_TYPE,
@@ -236,7 +235,7 @@ def upsert_course_run_file(file_id):
         course_file_data,
         COURSE_TYPE,
         retry_on_conflict=settings.INDEXING_ERROR_RETRIES,
-        parent=course_file_obj.run.object_id,
+        routing=gen_course_id(course_file_obj.run.content_object.platform, course_file_obj.run.content_object.course_id)
     )
 
 
@@ -301,9 +300,9 @@ def upsert_user_list(user_list_id):
 
 
 @app.task
-def delete_document(doc_id, object_type):
+def delete_document(doc_id, object_type, **kwargs):
     """Task that makes a request to remove an ES document"""
-    return api.delete_document(doc_id, object_type)
+    return api.delete_document(doc_id, object_type, **kwargs)
 
 
 @app.task(**PARTIAL_UPDATE_TASK_SETTINGS)
@@ -612,7 +611,7 @@ def start_recreate_index(self):
                     .values_list("id", flat=True),
                     chunk_size=settings.ELASTICSEARCH_INDEXING_CHUNK_SIZE,
                 )
-            ] if features.is_enabled(features.COURSE_FILE_SEARCH) else [],
+            ]
             + [
                 index_bootcamps.si(ids)
                 for ids in chunks(

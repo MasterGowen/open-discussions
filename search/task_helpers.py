@@ -21,7 +21,7 @@ from search.api import (
     gen_program_id,
     gen_user_list_id,
     gen_video_id,
-)
+    gen_course_run_file_id)
 from search.constants import (
     PROFILE_TYPE,
     COURSE_TYPE,
@@ -365,6 +365,31 @@ def delete_course(course_obj):
     """
     delete_document.delay(
         gen_course_id(course_obj.platform, course_obj.course_id), COURSE_TYPE
+    )
+
+
+@if_feature_enabled(INDEX_UPDATES)
+def upsert_course_run_file(course_run_file_id):
+    """
+    Run a task to create or update a course run file's Elasticsearch document
+
+    Args:
+        course_run_file_id (int): the primary key for the CourseRunFile to update
+    """
+    tasks.upsert_course_run_file.delay(course_run_file_id)
+
+
+@if_feature_enabled(INDEX_UPDATES)
+def delete_course_run_file(course_run_file_obj):
+    """
+    Runs a task to delete an ES CourseRunFile document
+
+    Args:
+        course_run_file_obj (course_catalog.models.CourseRunFile): A CourseRunFile object
+    """
+    course = course_run_file_obj.run.content_object
+    delete_document.delay(
+        gen_course_run_file_id(course_run_file_obj.run.id, course_run_file_obj.key), COURSE_TYPE, routing=gen_course_id(course.platform, course.course_id)
     )
 
 

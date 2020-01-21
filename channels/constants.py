@@ -52,6 +52,9 @@ WIDGET_LIST_CHANGE_PERM = "widgets.change_widgetlist"
 
 DELETED_COMMENT_OR_POST_TEXT = "[deleted]"
 
+VALID_COURSE_CONTENT_TYPES = ("file", "page")
+VALID_COURSE_CONTENT_CHOICES = zip(VALID_COURSE_CONTENT_TYPES, VALID_COURSE_CONTENT_TYPES)
+
 
 class VoteActions(Enum):
     """An enum indicating the valid vote actions that can be taken for a post or comment"""

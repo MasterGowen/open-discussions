@@ -27,6 +27,7 @@ from course_catalog.serializers import (
     LearningResourceRunSerializer,
 )
 from course_catalog.utils import get_course_url, load_course_blacklist
+from open_discussions import features
 from search.task_helpers import (
     delete_course,
     upsert_course,
@@ -82,7 +83,6 @@ def digest_ocw_course(master_json, last_modified, is_published, course_prefix=""
             "last_modified": last_modified,
             "is_published": True,  # This will be updated after all course runs are serialized
             "course_prefix": course_prefix,
-            "raw_json": master_json,  # This is slightly cleaner than popping the extra fields inside the serializer
         },
         instance=course_instance,
     )
@@ -128,6 +128,7 @@ def digest_ocw_course(master_json, last_modified, is_published, course_prefix=""
                 "url": get_course_url(
                     master_json.get("uid"), master_json, PlatformType.ocw.value
                 ),
+                "raw_json": master_json
             },
             instance=courserun_instance,
         )
@@ -140,6 +141,8 @@ def digest_ocw_course(master_json, last_modified, is_published, course_prefix=""
             return
         run = run_serializer.save()
         load_offered_bys(run, [{"name": OfferedBy.ocw.value}])
+        if features.is_enabled(features.COURSE_FILE_SEARCH):
+            sync_ocw_course_run_files(run)
 
 
 def get_s3_object_and_read(obj, iteration=0):
@@ -398,6 +401,10 @@ def sync_ocw_course(
         platform=PlatformType.ocw.value, run_id=uid
     ).first()
 
+    if courserun_instance and courserun_instance.raw_json is None:
+        courserun_instance.raw_json = course_json
+        courserun_instance.save()
+
     # Make sure that the data we are syncing is newer than what we already have
     if (
         courserun_instance
@@ -511,41 +518,67 @@ def sync_ocw_data(*, force_overwrite, upload_to_s3):
             delete_course(course)
 
 
-def sync_ocw_files(ids=None):
+def get_ocw_file_bucket():
+    """
+    Get the ODL S3 bucket for OCW files
+
+    Returns:
+        boto3.s3.Bucket: The S3 bucket object
+    """
+    return boto3.resource(
+        "s3",
+        aws_access_key_id=settings.OCW_LEARNING_COURSE_ACCESS_KEY,
+        aws_secret_access_key=settings.OCW_LEARNING_COURSE_SECRET_ACCESS_KEY,
+    ).Bucket(name=settings.OCW_LEARNING_COURSE_BUCKET_NAME)
+
+
+def sync_ocw_course_files(ids=None):
     """
     Sync all OCW course run files for a list of course ids to database
 
     Args:
         ids(list of int or None): list of course ids to process, all if None
     """
-    raw_data_bucket = boto3.resource(
-        "s3",
-        aws_access_key_id=settings.OCW_LEARNING_COURSE_ACCESS_KEY,
-        aws_secret_access_key=settings.OCW_LEARNING_COURSE_SECRET_ACCESS_KEY,
-    ).Bucket(name=settings.OCW_LEARNING_COURSE_BUCKET_NAME)
-
-    courses = Course.objects.filter(platform="ocw").filter(runs__files__isnull=True)
+    bucket = get_ocw_file_bucket()
+    courses = Course.objects.filter(platform="ocw")
     if ids is not None:
         courses = courses.filter(id__in=ids)
     for course in courses.iterator():
         runs = course.runs.exclude(url="")
         for run in runs.iterator():
-            prefix = run.url.split("/")[-1]
-            for course_file in raw_data_bucket.objects.filter(Prefix=prefix):
-                try:
-                    data = (
-                        raw_data_bucket.Object(course_file.key)
-                            .get()
-                            .get("Body", None)
-                    )
-                    sync_course_run_file(run, course_file.key, data)
-                except:  # pylint: disable=bare-except
-                    log.error("ERROR syncing %s", course_file.key)
+            try:
+                sync_ocw_course_run_files(run, bucket)
+            except:
+                log.exception("Error syncing files for course run %s", run)
+
+
+def sync_ocw_course_run_files(course_run, bucket=None):
+    """
+    Sync all files for an OCW course run to database if not present in DB or more recent on S3
+
+    Args:
+        course_run (LearningResourceRun): an OCW course run
+        bucket (Bucket): an S3 bucket
+
+    """
+    if not bucket:
+        bucket = get_ocw_file_bucket()
+    prefix = course_run.url.split("/")[-1]
+
+    for course_file in bucket.objects.filter(Prefix=prefix):
+        try:
+            s3_obj = bucket.Object(course_file.key).get()
+            course_file_obj = CourseRunFile.objects.filter(run=course_run, key=course_file.key).first()
+
+            if course_file_obj is None or s3_obj["LastModified"] > course_file_obj.updated_on:
+                sync_course_run_file(course_run, course_file.key, s3_obj.get("Body", None))
+        except:  # pylint: disable=bare-except
+            log.exception("ERROR syncing %s", course_file.key)
 
 
 def sync_course_run_file(course_run, course_file_name, data):
     """
-    Sync an OCW course run file to the database
+    Sync a course run file to the database
 
     Args:
         course_run (LearningResourceRun): a LearningResourceRun for a Course
@@ -565,7 +598,7 @@ def sync_course_run_file(course_run, course_file_name, data):
         course_run_file, _ = CourseRunFile.objects.update_or_create(
             run=course_run,
             key=course_file_name,
-            defaults={"full_content": fulltext},
+            defaults={"content": fulltext},
         )
         upsert_course_run_file(course_run_file.id)
         return course_run_file
