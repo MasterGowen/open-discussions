@@ -38,6 +38,13 @@ import {
 } from "../lib/url"
 import { capitalize, emptyOrNil, languageName } from "../lib/util"
 import { SEARCH_LIST_UI, searchResultToLearningResource } from "../lib/search"
+import { sendGAEvent,
+GA_CAT_COURSE_SEARCH,
+GA_ACT_OPEN_DRAWER,
+GA_ACT_SHARE_LR
+} from '../lib/google_analytics'
+
+window.sendGAEvent = sendGAEvent
 
 import type { LearningResourceResult } from "../flow/searchTypes"
 

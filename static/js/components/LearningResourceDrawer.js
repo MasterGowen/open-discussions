@@ -1,5 +1,5 @@
 // @flow
-import React, { useCallback } from "react"
+import React, { useCallback, useEffect } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { Drawer, DrawerContent } from "@rmwc/drawer"
 import { Theme } from "@rmwc/theme"
@@ -18,6 +18,12 @@ import {
   similarResourcesRequest,
   getSimilarResources
 } from "../lib/queries/learning_resources"
+import { sendGAEvent,
+GA_CAT_COURSE_SEARCH,
+GA_ACT_OPEN_DRAWER,
+GA_ACT_SHARE_LR
+} from '../lib/google_analytics'
+
 
 const getLRHistory = createSelector(
   state => state.ui,
@@ -90,6 +96,16 @@ export default function LearningResourceDrawer() {
   useRequest(getResourceRequest(objectId, objectType))
 
   const object = useSelector(learningResourceSelector)(objectId, objectType)
+
+  useEffect(() => {
+    sendGAEvent({
+      category: GA_CAT_COURSE_SEARCH,
+      action: GA_ACT_OPEN_DRAWER,
+      label: "lr_id",
+      value: objectId
+    }),
+      [ objectId ]
+  })
 
   useRequest(
     objectType === LR_TYPE_VIDEO && object ? embedlyRequest(object.url) : null
