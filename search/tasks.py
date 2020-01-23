@@ -557,17 +557,17 @@ def start_recreate_index(self):
                     chunk_size=settings.ELASTICSEARCH_INDEXING_CHUNK_SIZE,
                 )
             ]
-            + [
-                index_course_files.si(ids)
-                for ids in chunks(
-                    Course.objects.filter(published=True)
-                    .filter(platform=PlatformType.ocw.value)
-                    .exclude(course_id__in=blacklisted_ids)
-                    .order_by("id")
-                    .values_list("id", flat=True),
-                    chunk_size=settings.ELASTICSEARCH_INDEXING_CHUNK_SIZE,
-                )
-            ]
+            # + [
+            #     index_course_files.si(ids)
+            #     for ids in chunks(
+            #         Course.objects.filter(published=True)
+            #         .filter(platform=PlatformType.ocw.value)
+            #         .exclude(course_id__in=blacklisted_ids)
+            #         .order_by("id")
+            #         .values_list("id", flat=True),
+            #         chunk_size=1000,
+            #     )
+            # ]
             + [
                 index_bootcamps.si(ids)
                 for ids in chunks(

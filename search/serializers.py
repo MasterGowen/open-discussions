@@ -332,6 +332,7 @@ class ESCourseRunFileSerializer(
 
     def get_file_content(self, instance):
         """ Get the b64 encoded data """
+        data = ""
         if instance.content_type == CONTENT_TYPE_FILE:
             extension = instance.key.split(".")[-1].lower()
             if extension in [
@@ -353,10 +354,9 @@ class ESCourseRunFileSerializer(
                 )
                 s3_obj = s3.Object(
                     settings.OCW_LEARNING_COURSE_BUCKET_NAME, instance.key
-                ).get()
-                data = b64encode(s3_obj.get("Body").read()).decode()
-            else:
-                data = ""
+                )
+                if s3_obj.content_length <= 10000000:
+                    data = b64encode(s3_obj.get().get("Body").read()).decode()
         else:
             data = b64encode(instance.content.encode()).decode()
         return data

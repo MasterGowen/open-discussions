@@ -586,28 +586,12 @@ def sync_ocw_course_run_files(course_run, bucket=None):
                     course_file_obj is None
                     or s3_obj["LastModified"] > course_file_obj.updated_on
                 ):
-                    extension = key.split(".")[-1].lower()
-                    if extension in [
-                        "pdf",
-                        "htm",
-                        "html",
-                        "txt",
-                        "doc",
-                        "docx",
-                        "xls",
-                        "xlsx",
-                        "json",
-                        "rtf",
-                    ]:
-                        data = b64encode(s3_obj.get("Body").read()).decode()
-                    else:
-                        data = ""
                     sync_ocw_course_run_file(
                         course_run, course_file, key, content_type=CONTENT_TYPE_FILE
                     )
             else:
                 log.error(
-                    "Expected 1 matching S3 object for course %s run %s fjle %s, found %d",
+                    "Expected 1 matching S3 object for course %s run %s file %s, found %d",
                     course_run.object_id,
                     course_run.id,
                     course_file["uid"],
@@ -671,6 +655,7 @@ def sync_ocw_course_run_file(
         url = course_file.get("url", None)
         file_type = course_file.get("type", None)
         content = course_file.get("text", "")
+        # ES attachment plugin won't parse partial html
         if content and not content.startswith("<html"):
             content = f"<html><body>{content}</body></html>"
     course_run_file, _ = CourseRunFile.objects.update_or_create(
