@@ -1,11 +1,14 @@
 """Serializers for elasticsearch data"""
 import logging
+from base64 import b64encode
 
+import boto3
+from django.conf import settings
 from django.db.models import Prefetch
 from prawcore import NotFound
 from rest_framework import serializers
 
-from channels.constants import POST_TYPE, COMMENT_TYPE
+from channels.constants import POST_TYPE, COMMENT_TYPE, CONTENT_TYPE_FILE
 from channels.models import Comment, Post
 from course_catalog.models import (
     Course,
@@ -328,8 +331,35 @@ class ESCourseRunFileSerializer(
     file_content = serializers.SerializerMethodField()
 
     def get_file_content(self, instance):
-        """ Empty out the b64 data sent during ingestion """
-        return None
+        """ Get the b64 encoded data """
+        if instance.content_type == CONTENT_TYPE_FILE:
+            extension = instance.key.split(".")[-1].lower()
+            if extension in [
+                "pdf",
+                "htm",
+                "html",
+                "txt",
+                "doc",
+                "docx",
+                "xls",
+                "xlsx",
+                "json",
+                "rtf",
+            ]:
+                s3 = boto3.resource(
+                    "s3",
+                    aws_access_key_id=settings.OCW_LEARNING_COURSE_ACCESS_KEY,
+                    aws_secret_access_key=settings.OCW_LEARNING_COURSE_SECRET_ACCESS_KEY,
+                )
+                s3_obj = s3.Object(
+                    settings.OCW_LEARNING_COURSE_BUCKET_NAME, instance.key
+                ).get()
+                data = b64encode(s3_obj.get("Body").read()).decode()
+            else:
+                data = ""
+        else:
+            data = b64encode(instance.content.encode()).decode()
+        return data
 
     def get_resource_relations(self, instance):
         """ Get resource_relations properties"""
@@ -690,6 +720,18 @@ def serialize_bulk_courses(ids):
         ),
     ):
         yield serialize_course_for_bulk(course)
+
+
+def serialize_bulk_course_files(course_id):
+    """
+    Serialize course run files for bulk indexing
+
+    Args:
+        course_id(int): Course id
+    """
+    for course_run in Course.objects.get(id=course_id).runs.iterator():
+        for course_file in course_run.courserun_files.iterator():
+            yield serialize_course_file_for_bulk(course_file)
 
 
 def serialize_course_for_bulk(course_obj):

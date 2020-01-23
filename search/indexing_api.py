@@ -9,6 +9,8 @@ from elasticsearch.exceptions import ConflictError, NotFoundError
 from django.conf import settings
 from django.contrib.auth import get_user_model
 
+from course_catalog.models import Course
+from search.api import gen_course_id, gen_course_run_file_id
 from search.connection import (
     get_active_aliases,
     get_conn,
@@ -42,7 +44,7 @@ from search.serializers import (
     serialize_bulk_programs,
     serialize_bulk_user_lists,
     serialize_bulk_videos,
-)
+    serialize_bulk_course_files, ESCourseRunFileSerializer)
 
 log = logging.getLogger(__name__)
 User = get_user_model()
@@ -112,8 +114,27 @@ RESOURCE_RELATIONS = {
     "resource_relations": {"type": "join", "relations": {"resource": "resourcefile"}}
 }
 
+COURSE_FILE_OBJECT_TYPE = {
+    "run_id": {"type": "long"},
+    "key": {"type": "keyword"},
+    "title": ENGLISH_TEXT_FIELD_WITH_SUGGEST,
+    "description": ENGLISH_TEXT_FIELD_WITH_SUGGEST,
+    "content_type": {"type": "keyword"},
+    "url": {"type": "keyword"},
+    "uid": {"type": "keyword"},
+    "attachment": {
+        "type": "nested",
+        "properties": {
+            "content_type": {"type": "keyword"},
+            "language": {"type": "keyword"},
+            "content": ENGLISH_TEXT_FIELD,
+        },
+    },
+}
+
 LEARNING_RESOURCE_TYPE = {
     **RESOURCE_RELATIONS,
+    **COURSE_FILE_OBJECT_TYPE,
     "title": ENGLISH_TEXT_FIELD_WITH_SUGGEST,
     "short_description": ENGLISH_TEXT_FIELD_WITH_SUGGEST,
     "image_src": {"type": "keyword"},
@@ -149,28 +170,8 @@ LEARNING_RESOURCE_TYPE = {
     },
 }
 
-COURSE_FILE_OBJECT_TYPE = {
-    "run_id": {"type": "long"},
-    "key": {"type": "keyword"},
-    "title": ENGLISH_TEXT_FIELD_WITH_SUGGEST,
-    "description": ENGLISH_TEXT_FIELD_WITH_SUGGEST,
-    "content_type": {"type": "keyword"},
-    "object_type": {"type": "keyword"},
-    "url": {"type": "keyword"},
-    "uid": {"type": "keyword"},
-    "attachment": {
-        "type": "nested",
-        "properties": {
-            "content_type": {"type": "keyword"},
-            "language": {"type": "keyword"},
-            "content": ENGLISH_TEXT_FIELD,
-        },
-    },
-}
-
 COURSE_OBJECT_TYPE = {
     **LEARNING_RESOURCE_TYPE,
-    **COURSE_FILE_OBJECT_TYPE,
     "id": {"type": "long"},
     "course_id": {"type": "keyword"},
     "full_description": ENGLISH_TEXT_FIELD,
@@ -192,6 +193,7 @@ PROGRAM_OBJECT_TYPE = {**LEARNING_RESOURCE_TYPE, "id": {"type": "long"}}
 
 USER_LIST_OBJECT_TYPE = {
     **RESOURCE_RELATIONS,
+    **COURSE_FILE_OBJECT_TYPE,
     "id": {"type": "long"},
     "title": ENGLISH_TEXT_FIELD_WITH_SUGGEST,
     "short_description": ENGLISH_TEXT_FIELD_WITH_SUGGEST,
@@ -414,7 +416,7 @@ def ingest_attachment(doc_id, data, object_type, **kwargs):
                 "PUT",
                 _make_path(alias, GLOBAL_DOC_TYPE, doc_id),
                 params={"pipeline": "attachment", **kwargs},
-                body={"file_content": data},
+                body=data,
             )
         except ConflictError:
             log.error(
@@ -558,6 +560,29 @@ def index_courses(ids):
         ids(list of int): List of Course id's
     """
     index_items(serialize_bulk_courses, COURSE_TYPE, ids)
+
+
+def index_course_files(ids):
+    """
+    Index a list of course files by course id
+
+    Args:
+        ids(list of int): List of Course id's
+    """
+    for course in Course.objects.filter(id__in=ids).iterator():
+        routing = gen_course_id(
+            course.platform,
+            course.course_id,
+        )
+        for run in course.runs.iterator():
+            for coursefile in run.courserun_files.iterator():
+                course_file_data = ESCourseRunFileSerializer(coursefile).data
+                ingest_attachment(
+                    gen_course_run_file_id(coursefile.run_id, coursefile.key),
+                    course_file_data,
+                    COURSE_TYPE,
+                    routing=routing,
+                )
 
 
 def index_bootcamps(ids):

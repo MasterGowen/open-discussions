@@ -15,8 +15,7 @@ from prawcore.exceptions import PrawcoreException, NotFound
 from channels.constants import (
     LINK_TYPE_LINK,
     POST_TYPE,
-    COMMENT_TYPE,
-    CONTENT_TYPE_FILE,
+    COMMENT_TYPE
 )
 from channels.models import Comment, Post
 from course_catalog.constants import PlatformType
@@ -243,46 +242,10 @@ def ingest_course_run_file(file_id):
         course_file_obj.run.content_object.course_id,
     )
 
-    if course_file_obj.content_type == CONTENT_TYPE_FILE:
-        extension = course_file_obj.key.split(".")[-1].lower()
-        if extension in [
-            "pdf",
-            "htm",
-            "html",
-            "txt",
-            "doc",
-            "docx",
-            "xls",
-            "xlsx",
-            "json",
-            "rtf",
-        ]:
-            s3 = boto3.resource(
-                "s3",
-                aws_access_key_id=settings.OCW_LEARNING_COURSE_ACCESS_KEY,
-                aws_secret_access_key=settings.OCW_LEARNING_COURSE_SECRET_ACCESS_KEY,
-            )
-            s3_obj = s3.Object(
-                settings.OCW_LEARNING_COURSE_BUCKET_NAME, course_file_obj.key
-            ).get()
-            data = b64encode(s3_obj.get("Body").read()).decode()
-        else:
-            data = ""
-    else:
-        data = b64encode(course_file_obj.content.encode()).decode()
-
-    if data:
-        api.ingest_attachment(
-            gen_course_run_file_id(course_file_obj.run_id, course_file_obj.key),
-            data,
-            COURSE_TYPE,
-            routing=routing,
-        )
-    api.upsert_document(
+    api.ingest_attachment(
         gen_course_run_file_id(course_file_obj.run_id, course_file_obj.key),
         course_file_data,
         COURSE_TYPE,
-        retry_on_conflict=settings.INDEXING_ERROR_RETRIES,
         routing=routing,
     )
 
@@ -453,10 +416,7 @@ def index_course_files(ids):
 
     """
     try:
-        for course in Course.objects.filter(id__in=ids).iterator():
-            for run in course.runs.iterator():
-                for course_file in run.courserun_files.iterator():
-                    ingest_course_run_file(course_file.id)
+        api.index_course_files(ids)
     except (RetryException, Ignore):
         raise
     except:  # pylint: disable=bare-except
@@ -547,12 +507,12 @@ def start_recreate_index(self):
     Wipe and recreate index and mapping, and index all items.
     """
     try:
-        create_ingestion_pipeline()
-
         new_backing_indices = {
             obj_type: api.create_backing_index(obj_type)
             for obj_type in VALID_OBJECT_TYPES
         }
+
+        create_ingestion_pipeline()
 
         # Do the indexing on the temp index
         log.info(
@@ -603,42 +563,6 @@ def start_recreate_index(self):
                     Course.objects.filter(published=True)
                     .filter(platform=PlatformType.ocw.value)
                     .exclude(course_id__in=blacklisted_ids)
-                    .order_by("id")
-                    .values_list("id", flat=True),
-                    chunk_size=settings.ELASTICSEARCH_INDEXING_CHUNK_SIZE,
-                )
-            ]
-            + [
-                index_bootcamps.si(ids)
-                for ids in chunks(
-                    Bootcamp.objects.filter(published=True)
-                    .order_by("id")
-                    .values_list("id", flat=True),
-                    chunk_size=settings.ELASTICSEARCH_INDEXING_CHUNK_SIZE,
-                )
-            ]
-            + [
-                index_programs.si(ids)
-                for ids in chunks(
-                    Program.objects.filter(published=True)
-                    .order_by("id")
-                    .values_list("id", flat=True),
-                    chunk_size=settings.ELASTICSEARCH_INDEXING_CHUNK_SIZE,
-                )
-            ]
-            + [
-                index_user_lists.si(ids)
-                for ids in chunks(
-                    UserList.objects.order_by("id")
-                    .exclude(items=None)
-                    .values_list("id", flat=True),
-                    chunk_size=settings.ELASTICSEARCH_INDEXING_CHUNK_SIZE,
-                )
-            ]
-            + [
-                index_videos.si(ids)
-                for ids in chunks(
-                    Video.objects.filter(published=True)
                     .order_by("id")
                     .values_list("id", flat=True),
                     chunk_size=settings.ELASTICSEARCH_INDEXING_CHUNK_SIZE,

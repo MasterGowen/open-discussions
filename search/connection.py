@@ -70,8 +70,15 @@ def create_ingestion_pipeline():
         id="attachment",
         body={
             "description": "Extract attachment information",
-            "processors": [{"attachment": {"field": "file_content"}}],
-        },
+            "processors": [
+                {"attachment": {"field": "file_content"}},
+                {
+                    "remove": {
+                        "field": "file_content"
+                    }
+                }
+            ]
+        }
     )
 
 
