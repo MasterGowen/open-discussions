@@ -319,11 +319,17 @@ class ESResourceFileSerializerMixin(serializers.Serializer):
 
 
 class ESCourseRunFileSerializer(
-    ESResourceFileSerializerMixin, serializers.ModelSerializer
+    ESResourceFileSerializerMixin, ESModelSerializer
 ):
     """
     Elasticsearch serializer class for course run files
     """
+
+    file_content = serializers.SerializerMethodField()
+
+    def get_file_content(self, instance):
+        """ Empty out the b64 data sent during ingestion """
+        return None
 
     def get_resource_relations(self, instance):
         """ Get resource_relations properties"""
@@ -335,7 +341,17 @@ class ESCourseRunFileSerializer(
 
     class Meta:
         model = CourseRunFile
-        fields = ["run_id", "key", "content", "resource_relations"]
+        fields = [
+            "run_id",
+            "key",
+            "file_content",
+            "resource_relations",
+            "title",
+            "description",
+            "file_type",
+            "content_type",
+            "url",
+        ]
 
 
 class ESRunSerializer(LearningResourceSerializer):
@@ -674,18 +690,6 @@ def serialize_bulk_courses(ids):
         ),
     ):
         yield serialize_course_for_bulk(course)
-
-
-def serialize_bulk_course_files(course_id):
-    """
-    Serialize course run files for bulk indexing
-
-    Args:
-        course_id(int): Course id
-    """
-    for course_run in Course.objects.get(id=course_id).runs.iterator():
-        for course_file in course_run.courserun_files.iterator():
-            yield serialize_course_file_for_bulk(course_file)
 
 
 def serialize_course_for_bulk(course_obj):

@@ -2,6 +2,7 @@
 course_catalog api functions
 """
 import pdftotext
+from base64 import b64encode
 from datetime import datetime
 import json
 import logging
@@ -13,6 +14,7 @@ from django.contrib.contenttypes.models import ContentType
 from ocw_data_parser import OCWParser
 import pytz
 
+from channels.constants import CONTENT_TYPE_FILE, CONTENT_TYPE_PAGE
 from course_catalog.constants import (
     PlatformType,
     NON_COURSE_DIRECTORIES,
@@ -33,8 +35,8 @@ from search.task_helpers import (
     upsert_course,
     index_new_bootcamp,
     update_bootcamp,
+    ingest_course_run_file,
 )
-from search.tasks import upsert_course_run_file
 
 log = logging.getLogger(__name__)
 
@@ -128,7 +130,7 @@ def digest_ocw_course(master_json, last_modified, is_published, course_prefix=""
                 "url": get_course_url(
                     master_json.get("uid"), master_json, PlatformType.ocw.value
                 ),
-                "raw_json": master_json
+                "raw_json": master_json,
             },
             instance=courserun_instance,
         )
@@ -401,6 +403,7 @@ def sync_ocw_course(
         platform=PlatformType.ocw.value, run_id=uid
     ).first()
 
+    # Fix missing data from a previous run if necessary
     if courserun_instance and courserun_instance.raw_json is None:
         courserun_instance.raw_json = course_json
         courserun_instance.save()
@@ -548,13 +551,14 @@ def sync_ocw_course_files(ids=None):
         for run in runs.iterator():
             try:
                 sync_ocw_course_run_files(run, bucket)
+                sync_ocw_course_run_pages(run)
             except:
                 log.exception("Error syncing files for course run %s", run)
 
 
 def sync_ocw_course_run_files(course_run, bucket=None):
     """
-    Sync all files for an OCW course run to database if not present in DB or more recent on S3
+    Sync all files for an OCW course run to database if not present in DB
 
     Args:
         course_run (LearningResourceRun): an OCW course run
@@ -564,41 +568,122 @@ def sync_ocw_course_run_files(course_run, bucket=None):
     if not bucket:
         bucket = get_ocw_file_bucket()
     prefix = course_run.url.split("/")[-1]
+    s3_course_files = bucket.objects.filter(Prefix=prefix)
+    json_course_files = course_run.raw_json.get("course_files", [])
 
-    for course_file in bucket.objects.filter(Prefix=prefix):
+    for course_file in json_course_files:
         try:
-            s3_obj = bucket.Object(course_file.key).get()
-            course_file_obj = CourseRunFile.objects.filter(run=course_run, key=course_file.key).first()
-
-            if course_file_obj is None or s3_obj["LastModified"] > course_file_obj.updated_on:
-                sync_course_run_file(course_run, course_file.key, s3_obj.get("Body", None))
+            s3_objs = [
+                s3_obj for s3_obj in s3_course_files if course_file["uid"] in s3_obj.key
+            ]
+            if len(s3_objs) == 1:
+                key = s3_objs[0].key
+                s3_obj = s3_objs[0].get()
+                course_file_obj = CourseRunFile.objects.filter(
+                    run=course_run, key=key
+                ).first()
+                if (
+                    course_file_obj is None
+                    or s3_obj["LastModified"] > course_file_obj.updated_on
+                ):
+                    extension = key.split(".")[-1].lower()
+                    if extension in [
+                        "pdf",
+                        "htm",
+                        "html",
+                        "txt",
+                        "doc",
+                        "docx",
+                        "xls",
+                        "xlsx",
+                        "json",
+                        "rtf",
+                    ]:
+                        data = b64encode(s3_obj.get("Body").read()).decode()
+                    else:
+                        data = ""
+                    sync_ocw_course_run_file(
+                        course_run, course_file, key, content_type=CONTENT_TYPE_FILE
+                    )
+            else:
+                log.error(
+                    "Expected 1 matching S3 object for course %s run %s fjle %s, found %d",
+                    course_run.object_id,
+                    course_run.id,
+                    course_file["uid"],
+                    len(s3_objs),
+                )
         except:  # pylint: disable=bare-except
-            log.exception("ERROR syncing %s", course_file.key)
+            log.exception(
+                "ERROR syncing course file %s for run %d",
+                course_file.get("uid", ""),
+                course_run.id,
+            )
 
 
-def sync_course_run_file(course_run, course_file_name, data):
+def sync_ocw_course_run_pages(course_run):
     """
-    Sync a course run file to the database
+    Sync all HTML pages for an OCW course run to database if not present in DB
+
+    Args:
+        course_run (LearningResourceRun): an OCW course run
+
+    """
+    json_course_pages = course_run.raw_json.get("course_pages", [])
+    for course_page in json_course_pages:
+        try:
+            sync_ocw_course_run_file(
+                course_run,
+                course_page,
+                course_page["uid"],
+                content_type=CONTENT_TYPE_PAGE,
+            )
+        except:  # pylint: disable=bare-except
+            log.exception(
+                "ERROR syncing course page %s for run %d",
+                course_page.get("uid"),
+                course_run.id,
+            )
+
+
+def sync_ocw_course_run_file(
+    course_run, course_file, key, content_type=CONTENT_TYPE_FILE
+):
+    """
+    Sync a course run file/page to the database
 
     Args:
         course_run (LearningResourceRun): a LearningResourceRun for a Course
-        course_file_name (str): The name of the file
-        data (bytes or str): The content of the file
+        course_file (dict): The file JSON data
+        key: The unique key for the file
+        content_type  (str): file or page
 
     Returns:
         CourseRunFile: the object that was created or updated
     """
-    extension = course_file_name.split(".")[-1].lower()
-    if extension in ["pdf", "htm", "html", "txt"]:
-        if extension == "pdf":
-            pdf = pdftotext.PDF(data)
-            fulltext = "\n\n".join(pdf)
-        else:
-            fulltext = data
-        course_run_file, _ = CourseRunFile.objects.update_or_create(
-            run=course_run,
-            key=course_file_name,
-            defaults={"content": fulltext},
+    if content_type == "file":
+        url = "https://s3.amazonaws.com/{}/{}".format(
+            settings.OCW_LEARNING_COURSE_BUCKET_NAME, key
         )
-        upsert_course_run_file(course_run_file.id)
-        return course_run_file
+        file_type = course_file.get("file_type", None)
+        content = None
+    else:
+        url = course_file.get("url", None)
+        file_type = course_file.get("type", None)
+        content = course_file.get("text", "")
+        if content and not content.startswith("<html"):
+            content = f"<html><body>{content}</body></html>"
+    course_run_file, _ = CourseRunFile.objects.update_or_create(
+        run=course_run,
+        key=key,
+        defaults={
+            "content": content,
+            "title": course_file.get("title", None),
+            "description": course_file.get("description", None),
+            "url": url,
+            "file_type": file_type,
+            "content_type": content_type,
+        },
+    )
+    ingest_course_run_file(course_run_file.id)
+    return course_run_file

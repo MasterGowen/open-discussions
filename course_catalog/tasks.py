@@ -4,18 +4,19 @@ course_catalog tasks
 import logging
 import json
 
-import celery
 import requests
 import boto3
 from django.conf import settings
 
-from course_catalog.utils import load_course_blacklist
 from open_discussions.celery import app
 from course_catalog.constants import PlatformType
 from course_catalog.models import Course
-from course_catalog.api import sync_ocw_data, parse_bootcamp_json_data, sync_ocw_course_files
+from course_catalog.api import (
+    sync_ocw_data,
+    parse_bootcamp_json_data,
+    sync_ocw_course_files,
+)
 from course_catalog.etl import pipelines, youtube
-from open_discussions.utils import chunks
 
 log = logging.getLogger(__name__)
 

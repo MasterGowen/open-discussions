@@ -3,13 +3,12 @@ Functions and constants for Elasticsearch indexing
 """
 import logging
 
+from elasticsearch.client import _make_path
 from elasticsearch.helpers import bulk
 from elasticsearch.exceptions import ConflictError, NotFoundError
 from django.conf import settings
 from django.contrib.auth import get_user_model
 
-from course_catalog.models import Course
-from search.api import gen_course_id
 from search.connection import (
     get_active_aliases,
     get_conn,
@@ -43,9 +42,7 @@ from search.serializers import (
     serialize_bulk_programs,
     serialize_bulk_user_lists,
     serialize_bulk_videos,
-    serialize_bulk_course_files,
 )
-
 
 log = logging.getLogger(__name__)
 User = get_user_model()
@@ -155,7 +152,20 @@ LEARNING_RESOURCE_TYPE = {
 COURSE_FILE_OBJECT_TYPE = {
     "run_id": {"type": "long"},
     "key": {"type": "keyword"},
-    "content": ENGLISH_TEXT_FIELD,
+    "title": ENGLISH_TEXT_FIELD_WITH_SUGGEST,
+    "description": ENGLISH_TEXT_FIELD_WITH_SUGGEST,
+    "content_type": {"type": "keyword"},
+    "object_type": {"type": "keyword"},
+    "url": {"type": "keyword"},
+    "uid": {"type": "keyword"},
+    "attachment": {
+        "type": "nested",
+        "properties": {
+            "content_type": {"type": "keyword"},
+            "language": {"type": "keyword"},
+            "content": ENGLISH_TEXT_FIELD,
+        },
+    },
 }
 
 COURSE_OBJECT_TYPE = {
@@ -387,6 +397,33 @@ def _update_document_by_id(doc_id, body, object_type, *, retry_on_conflict=0, **
             )
 
 
+def ingest_attachment(doc_id, data, object_type, **kwargs):
+    """
+    Makes a request to ingest an attachment
+
+    Args:
+        doc_id (str): The ES document id
+        data: (str): The b64-encoded attachment body
+        object_type (str):  The object type (course, video, etc)
+        kwargs (dict): Optional parameters
+    """
+    conn = get_conn(verify=True)
+    for alias in get_active_aliases(conn, [object_type]):
+        try:
+            conn.transport.perform_request(
+                "PUT",
+                _make_path(alias, GLOBAL_DOC_TYPE, doc_id),
+                params={"pipeline": "attachment", **kwargs},
+                body={"file_content": data},
+            )
+        except ConflictError:
+            log.error(
+                "Ingest API request resulted in a version conflict (alias: %s, doc id: %s)",
+                alias,
+                doc_id,
+            )
+
+
 def update_document_with_partial(doc_id, doc, object_type, *, retry_on_conflict=0):
     """
     Makes a request to ES to update an existing document
@@ -521,22 +558,6 @@ def index_courses(ids):
         ids(list of int): List of Course id's
     """
     index_items(serialize_bulk_courses, COURSE_TYPE, ids)
-
-
-def index_course_files(ids):
-    """
-    Index a list of course files by course id
-
-    Args:
-        ids(list of int): List of Course id's
-    """
-    for course in Course.objects.filter(id__in=ids).iterator():
-        index_items(
-            serialize_bulk_course_files,
-            COURSE_TYPE,
-            course.id,
-            routing=gen_course_id(course.platform, course.course_id),
-        )
 
 
 def index_bootcamps(ids):

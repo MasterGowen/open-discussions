@@ -606,9 +606,14 @@ export const buildLearnQuery = (
               has_child: {
                 type:  "resourcefile",
                 query: {
-                  [queryType]: {
-                    query:  text,
-                    fields: ["content"]
+                  nested: {
+                    path:  "attachment",
+                    query: {
+                      [queryType]: {
+                        query:  text,
+                        fields: ["attachment.content"]
+                      }
+                    }
                   }
                 }
               }

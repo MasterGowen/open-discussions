@@ -22,13 +22,13 @@ class Command(BaseCommand):
             [
                 get_ocw_files.si(ids)
                 for ids in chunks(
-                Course.objects.filter(published=True)
+                    Course.objects.filter(published=True)
                     .filter(platform=PlatformType.ocw.value)
                     .exclude(course_id__in=blacklisted_ids)
                     .order_by("id")
                     .values_list("id", flat=True),
-                chunk_size=settings.ELASTICSEARCH_INDEXING_CHUNK_SIZE
-            )
+                    chunk_size=settings.ELASTICSEARCH_INDEXING_CHUNK_SIZE,
+                )
             ]
         )()
         self.stdout.write(
@@ -39,5 +39,7 @@ class Command(BaseCommand):
         task.get()
         total_seconds = (now_in_utc() - start).total_seconds()
         self.stdout.write(
-            "Population of ocw file data finished, took {} seconds".format(total_seconds)
+            "Population of ocw file data finished, took {} seconds".format(
+                total_seconds
+            )
         )

@@ -6,27 +6,37 @@ import django.db.models.deletion
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('course_catalog', '0059_remove_deprecated_offered_by'),
-    ]
+    dependencies = [("course_catalog", "0059_remove_deprecated_offered_by")]
 
     operations = [
         migrations.CreateModel(
-            name='CourseRunFile',
+            name="CourseRunFile",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_on', models.DateTimeField(auto_now_add=True)),
-                ('updated_on', models.DateTimeField(auto_now=True)),
-                ('key', models.CharField(max_length=1024)),
-                ('content', models.TextField(blank=True, null=True)),
-                ('run', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='courserun_files', to='course_catalog.LearningResourceRun')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("created_on", models.DateTimeField(auto_now_add=True)),
+                ("updated_on", models.DateTimeField(auto_now=True)),
+                ("key", models.CharField(max_length=1024)),
+                ("content", models.TextField(blank=True, null=True)),
+                (
+                    "run",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="courserun_files",
+                        to="course_catalog.LearningResourceRun",
+                    ),
+                ),
             ],
-            options={
-                'verbose_name': 'courserunfile',
-            },
+            options={"verbose_name": "courserunfile"},
         ),
         migrations.AlterUniqueTogether(
-            name='courserunfile',
-            unique_together={('key', 'run')},
+            name="courserunfile", unique_together={("key", "run")}
         ),
     ]

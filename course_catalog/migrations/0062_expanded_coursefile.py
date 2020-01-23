@@ -5,49 +5,51 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('course_catalog', '0061_move_raw_json'),
-    ]
+    dependencies = [("course_catalog", "0061_move_raw_json")]
 
     operations = [
         migrations.AddField(
-            model_name='courserunfile',
-            name='content_type',
-            field=models.CharField(choices=[('file', 'file'), ('page', 'page')], default='file', max_length=10),
+            model_name="courserunfile",
+            name="content_type",
+            field=models.CharField(
+                choices=[("file", "file"), ("page", "page")],
+                default="file",
+                max_length=10,
+            ),
         ),
         migrations.AddField(
-            model_name='courserunfile',
-            name='description',
+            model_name="courserunfile",
+            name="description",
             field=models.TextField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='courserunfile',
-            name='section',
+            model_name="courserunfile",
+            name="section",
             field=models.CharField(blank=True, max_length=128, null=True),
         ),
         migrations.AddField(
-            model_name='courserunfile',
-            name='short_url',
+            model_name="courserunfile",
+            name="short_url",
             field=models.TextField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='courserunfile',
-            name='title',
+            model_name="courserunfile",
+            name="title",
             field=models.CharField(blank=True, max_length=1024, null=True),
         ),
         migrations.AddField(
-            model_name='courserunfile',
-            name='type',
+            model_name="courserunfile",
+            name="type",
             field=models.CharField(blank=True, max_length=128, null=True),
         ),
         migrations.AddField(
-            model_name='courserunfile',
-            name='url',
+            model_name="courserunfile",
+            name="url",
             field=models.TextField(blank=True, null=True),
         ),
         migrations.AlterField(
-            model_name='courserunfile',
-            name='key',
+            model_name="courserunfile",
+            name="key",
             field=models.CharField(blank=True, max_length=1024, null=True),
         ),
     ]

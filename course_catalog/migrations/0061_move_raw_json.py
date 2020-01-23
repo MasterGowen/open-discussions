@@ -6,19 +6,17 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('course_catalog', '0060_courserunfile'),
-    ]
+    dependencies = [("course_catalog", "0060_courserunfile")]
 
     operations = [
         migrations.AddField(
-            model_name='bootcamp',
-            name='raw_json',
+            model_name="bootcamp",
+            name="raw_json",
             field=django.contrib.postgres.fields.jsonb.JSONField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='learningresourcerun',
-            name='raw_json',
+            model_name="learningresourcerun",
+            name="raw_json",
             field=django.contrib.postgres.fields.jsonb.JSONField(blank=True, null=True),
         ),
     ]

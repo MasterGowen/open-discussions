@@ -1,7 +1,9 @@
 """Indexing tasks"""
+from base64 import b64encode
 from contextlib import contextmanager
 import logging
 
+import boto3
 import celery
 from celery.exceptions import Ignore
 from django.conf import settings
@@ -10,7 +12,12 @@ from elasticsearch.exceptions import NotFoundError
 from praw.exceptions import PRAWException
 from prawcore.exceptions import PrawcoreException, NotFound
 
-from channels.constants import LINK_TYPE_LINK, POST_TYPE, COMMENT_TYPE
+from channels.constants import (
+    LINK_TYPE_LINK,
+    POST_TYPE,
+    COMMENT_TYPE,
+    CONTENT_TYPE_FILE,
+)
 from channels.models import Comment, Post
 from course_catalog.constants import PlatformType
 from course_catalog.models import (
@@ -28,6 +35,7 @@ from open_discussions.utils import merge_strings, chunks, html_to_plain_text
 from profiles.models import Profile
 from search import indexing_api as api
 from search.api import gen_course_run_file_id, gen_course_id
+from search.connection import create_ingestion_pipeline
 from search.constants import (
     BOOTCAMP_TYPE,
     COURSE_TYPE,
@@ -225,17 +233,57 @@ def upsert_course(course_id):
 
 
 @app.task(**PARTIAL_UPDATE_TASK_SETTINGS)
-def upsert_course_run_file(file_id):
-    """Upsert course file based on stored database information"""
+def ingest_course_run_file(file_id):
+    """Ingest course file data based on stored database information"""
 
     course_file_obj = CourseRunFile.objects.get(id=file_id)
     course_file_data = ESCourseRunFileSerializer(course_file_obj).data
+    routing = gen_course_id(
+        course_file_obj.run.content_object.platform,
+        course_file_obj.run.content_object.course_id,
+    )
+
+    if course_file_obj.content_type == CONTENT_TYPE_FILE:
+        extension = course_file_obj.key.split(".")[-1].lower()
+        if extension in [
+            "pdf",
+            "htm",
+            "html",
+            "txt",
+            "doc",
+            "docx",
+            "xls",
+            "xlsx",
+            "json",
+            "rtf",
+        ]:
+            s3 = boto3.resource(
+                "s3",
+                aws_access_key_id=settings.OCW_LEARNING_COURSE_ACCESS_KEY,
+                aws_secret_access_key=settings.OCW_LEARNING_COURSE_SECRET_ACCESS_KEY,
+            )
+            s3_obj = s3.Object(
+                settings.OCW_LEARNING_COURSE_BUCKET_NAME, course_file_obj.key
+            ).get()
+            data = b64encode(s3_obj.get("Body").read()).decode()
+        else:
+            data = ""
+    else:
+        data = b64encode(course_file_obj.content.encode()).decode()
+
+    if data:
+        api.ingest_attachment(
+            gen_course_run_file_id(course_file_obj.run_id, course_file_obj.key),
+            data,
+            COURSE_TYPE,
+            routing=routing,
+        )
     api.upsert_document(
         gen_course_run_file_id(course_file_obj.run_id, course_file_obj.key),
         course_file_data,
         COURSE_TYPE,
         retry_on_conflict=settings.INDEXING_ERROR_RETRIES,
-        routing=gen_course_id(course_file_obj.run.content_object.platform, course_file_obj.run.content_object.course_id)
+        routing=routing,
     )
 
 
@@ -405,11 +453,14 @@ def index_course_files(ids):
 
     """
     try:
-        api.index_course_files(ids)
+        for course in Course.objects.filter(id__in=ids).iterator():
+            for run in course.runs.iterator():
+                for course_file in run.courserun_files.iterator():
+                    ingest_course_run_file(course_file.id)
     except (RetryException, Ignore):
         raise
     except:  # pylint: disable=bare-except
-        error = f"index_course_files threw an error"
+        error = f"index_course_files_ingest threw an error"
         log.exception(error)
         return error
 
@@ -496,6 +547,8 @@ def start_recreate_index(self):
     Wipe and recreate index and mapping, and index all items.
     """
     try:
+        create_ingestion_pipeline()
+
         new_backing_indices = {
             obj_type: api.create_backing_index(obj_type)
             for obj_type in VALID_OBJECT_TYPES
@@ -586,27 +639,6 @@ def start_recreate_index(self):
                 index_videos.si(ids)
                 for ids in chunks(
                     Video.objects.filter(published=True)
-                    .order_by("id")
-                    .values_list("id", flat=True),
-                    chunk_size=settings.ELASTICSEARCH_INDEXING_CHUNK_SIZE,
-                )
-            ]
-            + [
-                index_courses.si(ids)
-                for ids in chunks(
-                    Course.objects.filter(published=True)
-                    .exclude(course_id__in=blacklisted_ids)
-                    .order_by("id")
-                    .values_list("id", flat=True),
-                    chunk_size=settings.ELASTICSEARCH_INDEXING_CHUNK_SIZE,
-                )
-            ]
-            + [
-                index_course_files.si(ids)
-                for ids in chunks(
-                    Course.objects.filter(published=True)
-                    .filter(platform="ocw")
-                    .exclude(course_id__in=blacklisted_ids)
                     .order_by("id")
                     .values_list("id", flat=True),
                     chunk_size=settings.ELASTICSEARCH_INDEXING_CHUNK_SIZE,

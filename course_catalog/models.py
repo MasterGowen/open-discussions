@@ -7,7 +7,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.contrib.postgres.fields import JSONField
 
-from channels.constants import VALID_COURSE_CONTENT_CHOICES
+from channels.constants import VALID_COURSE_CONTENT_CHOICES, CONTENT_TYPE_FILE
 from course_catalog.constants import ResourceType, PrivacyLevel
 from course_catalog.utils import user_list_image_upload_uri
 from open_discussions.models import TimestampedModel
@@ -153,11 +153,12 @@ class CourseRunFile(TimestampedModel):
     description = models.TextField(null=True, blank=True)
     content = models.TextField(null=True, blank=True)
 
-    section = models.CharField(max_length=128, null=True, blank=True)
-    type = models.CharField(max_length=128, null=True, blank=True)
     url = models.TextField(null=True, blank=True)
     short_url = models.TextField(null=True, blank=True)
-    content_type = models.CharField(choices=VALID_COURSE_CONTENT_CHOICES, default="file", max_length=10)
+    file_type = models.CharField(max_length=128, null=True, blank=True)
+    content_type = models.CharField(
+        choices=VALID_COURSE_CONTENT_CHOICES, default=CONTENT_TYPE_FILE, max_length=10
+    )
 
     class Meta:
         unique_together = (("key", "run"),)

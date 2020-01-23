@@ -5,6 +5,7 @@ from functools import partial
 import uuid
 
 from django.conf import settings
+from elasticsearch.client import IngestClient
 from elasticsearch_dsl.connections import connections
 
 from search.constants import VALID_OBJECT_TYPES
@@ -58,6 +59,20 @@ def get_conn(*, verify=True):
 
     _CONN_VERIFIED = True
     return _CONN
+
+
+def create_ingestion_pipeline():
+    """
+    Set up the ingestion pipeline for file data
+    """
+    ingestion_client = IngestClient(get_conn())
+    ingestion_client.put_pipeline(
+        id="attachment",
+        body={
+            "description": "Extract attachment information",
+            "processors": [{"attachment": {"field": "file_content"}}],
+        },
+    )
 
 
 def make_backing_index_name(object_type):
