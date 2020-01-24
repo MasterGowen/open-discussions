@@ -44,7 +44,6 @@ from search.serializers import (
     serialize_bulk_programs,
     serialize_bulk_user_lists,
     serialize_bulk_videos,
-    serialize_bulk_course_files,
     ESCourseRunFileSerializer,
 )
 
