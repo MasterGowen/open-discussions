@@ -5,23 +5,20 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('course_catalog', '0062_expanded_coursefile'),
-    ]
+    dependencies = [("course_catalog", "0062_expanded_coursefile")]
 
     operations = [
         migrations.RenameField(
-            model_name='courserunfile',
-            old_name='type',
-            new_name='file_type',
+            model_name="courserunfile", old_name="type", new_name="file_type"
         ),
-        migrations.RemoveField(
-            model_name='courserunfile',
-            name='section',
-        ),
+        migrations.RemoveField(model_name="courserunfile", name="section"),
         migrations.AlterField(
-            model_name='courserunfile',
-            name='content_type',
-            field=models.CharField(choices=[('page', 'page'), ('file', 'file')], default='file', max_length=10),
+            model_name="courserunfile",
+            name="content_type",
+            field=models.CharField(
+                choices=[("page", "page"), ("file", "file")],
+                default="file",
+                max_length=10,
+            ),
         ),
     ]

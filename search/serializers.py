@@ -321,9 +321,7 @@ class ESResourceFileSerializerMixin(serializers.Serializer):
         raise NotImplemented
 
 
-class ESCourseRunFileSerializer(
-    ESResourceFileSerializerMixin, ESModelSerializer
-):
+class ESCourseRunFileSerializer(ESResourceFileSerializerMixin, ESModelSerializer):
     """
     Elasticsearch serializer class for course run files
     """
@@ -333,32 +331,35 @@ class ESCourseRunFileSerializer(
     def get_file_content(self, instance):
         """ Get the b64 encoded data """
         data = ""
-        if instance.content_type == CONTENT_TYPE_FILE:
-            extension = instance.key.split(".")[-1].lower()
-            if extension in [
-                "pdf",
-                "htm",
-                "html",
-                "txt",
-                "doc",
-                "docx",
-                "xls",
-                "xlsx",
-                "json",
-                "rtf",
-            ]:
-                s3 = boto3.resource(
-                    "s3",
-                    aws_access_key_id=settings.OCW_LEARNING_COURSE_ACCESS_KEY,
-                    aws_secret_access_key=settings.OCW_LEARNING_COURSE_SECRET_ACCESS_KEY,
-                )
-                s3_obj = s3.Object(
-                    settings.OCW_LEARNING_COURSE_BUCKET_NAME, instance.key
-                )
-                if s3_obj.content_length <= 10000000:
-                    data = b64encode(s3_obj.get().get("Body").read()).decode()
-        else:
-            data = b64encode(instance.content.encode()).decode()
+        try:
+            if instance.content_type == CONTENT_TYPE_FILE:
+                extension = instance.key.split(".")[-1].lower()
+                if extension in [
+                    "pdf",
+                    "htm",
+                    "html",
+                    "txt",
+                    "doc",
+                    "docx",
+                    "xls",
+                    "xlsx",
+                    "json",
+                    "rtf",
+                ]:
+                    s3 = boto3.resource(
+                        "s3",
+                        aws_access_key_id=settings.OCW_LEARNING_COURSE_ACCESS_KEY,
+                        aws_secret_access_key=settings.OCW_LEARNING_COURSE_SECRET_ACCESS_KEY,
+                    )
+                    s3_obj = s3.Object(
+                        settings.OCW_LEARNING_COURSE_BUCKET_NAME, instance.key
+                    )
+                    if True: #s3_obj.content_length <= 10_000_000:
+                        data = b64encode(s3_obj.get().get("Body", "").read()).decode()
+            elif instance.content:
+                data = b64encode(instance.content.encode()).decode()
+        except:
+            log.exception("Error reading data for coursefile %d", instance.id)
         return data
 
     def get_resource_relations(self, instance):

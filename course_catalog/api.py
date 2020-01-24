@@ -6,6 +6,7 @@ from base64 import b64encode
 from datetime import datetime
 import json
 import logging
+from urllib.parse import urlparse
 
 import boto3
 from django.db import transaction
@@ -550,35 +551,38 @@ def sync_ocw_course_files(ids=None):
         runs = course.runs.exclude(url="")
         for run in runs.iterator():
             try:
-                sync_ocw_course_run_files(run, bucket)
-                sync_ocw_course_run_pages(run)
+                prefix = run.url.split("/")[-1]
+                s3_master_json = json.loads(
+                    bucket.Object("{}/{}_master.json".format(prefix, run.run_id))
+                    .get()["Body"]
+                    .read()
+                )
+                sync_ocw_course_run_files(run, s3_master_json, bucket=bucket)
+                sync_ocw_course_run_pages(run, s3_master_json)
             except:
                 log.exception("Error syncing files for course run %s", run)
 
 
-def sync_ocw_course_run_files(course_run, bucket=None):
+def sync_ocw_course_run_files(course_run, master_json, bucket=None):
     """
     Sync all files for an OCW course run to database if not present in DB
 
     Args:
         course_run (LearningResourceRun): an OCW course run
+        master_json (dict): Details about the course run
         bucket (Bucket): an S3 bucket
 
     """
     if not bucket:
         bucket = get_ocw_file_bucket()
-    prefix = course_run.url.split("/")[-1]
-    s3_course_files = bucket.objects.filter(Prefix=prefix)
-    json_course_files = course_run.raw_json.get("course_files", [])
+    json_course_files = master_json.get("course_files", [])
 
     for course_file in json_course_files:
         try:
-            s3_objs = [
-                s3_obj for s3_obj in s3_course_files if course_file["uid"] in s3_obj.key
-            ]
-            if len(s3_objs) == 1:
-                key = s3_objs[0].key
-                s3_obj = s3_objs[0].get()
+            s3_url = course_file.get("file_location", None)
+            if s3_url:
+                key = urlparse(s3_url).path[1:]
+                s3_obj = bucket.Object(key).get()
                 course_file_obj = CourseRunFile.objects.filter(
                     run=course_run, key=key
                 ).first()
@@ -589,14 +593,6 @@ def sync_ocw_course_run_files(course_run, bucket=None):
                     sync_ocw_course_run_file(
                         course_run, course_file, key, content_type=CONTENT_TYPE_FILE
                     )
-            else:
-                log.error(
-                    "Expected 1 matching S3 object for course %s run %s file %s, found %d",
-                    course_run.object_id,
-                    course_run.id,
-                    course_file["uid"],
-                    len(s3_objs),
-                )
         except:  # pylint: disable=bare-except
             log.exception(
                 "ERROR syncing course file %s for run %d",
@@ -605,15 +601,16 @@ def sync_ocw_course_run_files(course_run, bucket=None):
             )
 
 
-def sync_ocw_course_run_pages(course_run):
+def sync_ocw_course_run_pages(course_run, master_json):
     """
     Sync all HTML pages for an OCW course run to database if not present in DB
 
     Args:
         course_run (LearningResourceRun): an OCW course run
+        master_json (dict): Details about the course run
 
     """
-    json_course_pages = course_run.raw_json.get("course_pages", [])
+    json_course_pages = master_json.get("course_pages", [])
     for course_page in json_course_pages:
         try:
             sync_ocw_course_run_file(

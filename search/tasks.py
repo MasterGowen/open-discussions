@@ -12,11 +12,7 @@ from elasticsearch.exceptions import NotFoundError
 from praw.exceptions import PRAWException
 from prawcore.exceptions import PrawcoreException, NotFound
 
-from channels.constants import (
-    LINK_TYPE_LINK,
-    POST_TYPE,
-    COMMENT_TYPE
-)
+from channels.constants import LINK_TYPE_LINK, POST_TYPE, COMMENT_TYPE
 from channels.models import Comment, Post
 from course_catalog.constants import PlatformType
 from course_catalog.models import (
@@ -557,17 +553,6 @@ def start_recreate_index(self):
                     chunk_size=settings.ELASTICSEARCH_INDEXING_CHUNK_SIZE,
                 )
             ]
-            # + [
-            #     index_course_files.si(ids)
-            #     for ids in chunks(
-            #         Course.objects.filter(published=True)
-            #         .filter(platform=PlatformType.ocw.value)
-            #         .exclude(course_id__in=blacklisted_ids)
-            #         .order_by("id")
-            #         .values_list("id", flat=True),
-            #         chunk_size=1000,
-            #     )
-            # ]
             + [
                 index_bootcamps.si(ids)
                 for ids in chunks(

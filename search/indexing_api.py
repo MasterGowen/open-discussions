@@ -44,7 +44,9 @@ from search.serializers import (
     serialize_bulk_programs,
     serialize_bulk_user_lists,
     serialize_bulk_videos,
-    serialize_bulk_course_files, ESCourseRunFileSerializer)
+    serialize_bulk_course_files,
+    ESCourseRunFileSerializer,
+)
 
 log = logging.getLogger(__name__)
 User = get_user_model()
@@ -570,10 +572,7 @@ def index_course_files(ids):
         ids(list of int): List of Course id's
     """
     for course in Course.objects.filter(id__in=ids).iterator():
-        routing = gen_course_id(
-            course.platform,
-            course.course_id,
-        )
+        routing = gen_course_id(course.platform, course.course_id)
         for run in course.runs.iterator():
             for coursefile in run.courserun_files.iterator():
                 course_file_data = ESCourseRunFileSerializer(coursefile).data
