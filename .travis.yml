@@ -5,15 +5,25 @@ dist: xenial
 
 matrix:
   include:
-    - language: ruby
+    - language: minimal
       install:
         - env | grep TRAVIS > .env
         - env | grep CI >> .env
-      script: docker-compose -f docker-compose.yml -f docker-compose.travis.yml run web tox
+        - mkdir .tox/ codecov/ && chmod o+rw {.tox,codecov}/
+      before_script:
+        # pull images so they're ready to run
+        - docker-compose pull redis db elastic
+        # build the containers so they're ready to run
+        - docker-compose build web
+        # warm up the app by creating the containers, network, etc but don't start anything yet
+        # this ensures that everything is in place by the time wait-for-datastores.sh runs
+        - docker-compose up --no-start
+      script: docker-compose run web bash ./travis/py_tests.sh
       services:
         - docker
       env:
         name: Python
+
     - language: node_js
       before_install:
         - curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version 1.13.0

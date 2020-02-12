@@ -5,3 +5,5 @@ libjpeg-dev
 zlib1g-dev
 net-tools
 libxmlsec1-dev
+netcat
+redis-tools
