@@ -9,7 +9,7 @@ matrix:
       install:
         - env | grep TRAVIS > .env
         - env | grep CI >> .env
-        - mkdir .tox/ codecov/ && chmod o+rw {.tox,codecov}/
+        - chmod o+rw .
       before_script:
         # pull images so they're ready to run
         - docker-compose pull redis db elastic
