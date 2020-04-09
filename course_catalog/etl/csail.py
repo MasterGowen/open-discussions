@@ -10,7 +10,6 @@ import pytz
 import requests
 from bs4 import BeautifulSoup as bs
 from django.conf import settings
-from requests.exceptions import SSLError
 
 from course_catalog.constants import OfferedBy, PlatformType
 from course_catalog.etl.utils import (
@@ -37,7 +36,7 @@ def _unverified_cert_request(url):
     """
     try:
         return requests.get(url)
-    except SSLError:
+    except requests.exceptions.SSLError:
         return requests.get(url.replace("https:", "http:"))
 
 
@@ -184,19 +183,23 @@ def extract():
     for listing in listings:
         link = listing.find("div", {"class": "faux-title"}).find("a")
         url = link.get("href")
-        details = bs(_unverified_cert_request(url).content, "html.parser")
-        courses.append(
-            {
-                "url": url,
-                "title": strip_extra_whitespace(link.get_text()),
-                "dates": _parse_run_dates(details),
-                "price": _parse_price(details),
-                "instructors": _parse_instructors(details),
-                "short_description": _parse_short_description(listing),
-                "full_description": _parse_full_description(details),
-                "image_src": urljoin(settings.CSAIL_BASE_URL, _parse_image(listing)),
-            }
-        )
+        # Some external courses/programs might be here, ignore them for now
+        if url.startswith(settings.CSAIL_BASE_URL):
+            details = bs(_unverified_cert_request(url).content, "html.parser")
+            courses.append(
+                {
+                    "url": url,
+                    "title": strip_extra_whitespace(link.get_text()),
+                    "dates": _parse_run_dates(details),
+                    "price": _parse_price(details),
+                    "instructors": _parse_instructors(details),
+                    "short_description": _parse_short_description(listing),
+                    "full_description": _parse_full_description(details),
+                    "image_src": urljoin(
+                        settings.CSAIL_BASE_URL, _parse_image(listing)
+                    ),
+                }
+            )
     return courses
 
 
@@ -212,6 +215,7 @@ def transform(courses):
             "course_id": generate_unique_id(course["url"]),
             "platform": PLATFORM,
             "offered_by": OFFERED_BY,
+            "topics": [{"name": "Computer Science"}],
             "image_src": course["image_src"],
             "runs": [
                 {

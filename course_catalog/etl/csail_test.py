@@ -6,8 +6,17 @@ from decimal import Decimal
 import pytest
 import pytz
 from bs4 import BeautifulSoup
+from requests.exceptions import SSLError
 
-from course_catalog.etl.csail import transform, extract, _parse_price, _parse_run_dates
+from course_catalog.etl.csail import (
+    transform,
+    extract,
+    _parse_price,
+    _parse_run_dates,
+    _unverified_cert_request,
+)
+
+# pylint: disable=unused-argument,redefined-outer-name
 
 short_description = "Ut faucibus pulvinar elementum integer enim neque volutpat ac. Pretium fusce id velit ut tortor \
 pretium viverra suspendisse. Massa enim nec dui nunc mattis. Leo in vitae turpis massa sed elementum. Erat imperdiet \
@@ -22,7 +31,7 @@ egestas. Eget gravida cum sociis natoque penatibus et magnis dis."
 title = "Semper Quis Lectus Nulla At"
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture
 def mock_request(mocker):
     """
     Mock request data
@@ -42,7 +51,7 @@ def mock_request(mocker):
 
 
 @pytest.mark.parametrize("base_url", [None, "", "https://cap.csail.mit.edu/"])
-def test_csail_extract(settings, base_url):
+def test_csail_extract(settings, base_url, mock_request):
     """Verify that BeautifulSoup tags are returned per listing and course detail"""
     settings.CSAIL_BASE_URL = base_url
     results = extract()
@@ -75,7 +84,7 @@ def test_csail_extract(settings, base_url):
     )
 
 
-def test_csail_transform(settings):
+def test_csail_transform(settings, mock_request):
     """Verify that the correct dict data is returned for a course"""
     settings.CSAIL_BASE_URL = "https://cap.csail.mit.edu/"
     assert transform(extract()) == [
@@ -87,6 +96,7 @@ def test_csail_transform(settings):
             "course_id": "9d54f742390f3ddc8ead72b104fff774",
             "platform": "csail",
             "offered_by": [{"name": "CSAIL"}],
+            "topics": [{"name": "Computer Science"}],
             "image_src": "https://cap.csail.mit.edu/sites/Image%202%20-1024x890.jpeg",
             "runs": [
                 {
@@ -164,3 +174,16 @@ def test__parse_dates(start_text, duration_text, expected_start, expected_end):
         assert _parse_run_dates(soup) == [(expected_start, expected_end)]
     else:
         assert _parse_run_dates(soup) is None
+
+
+def test_bad_ssl_certificate(mocker):
+    """Test that requests.get switches to http if an https URL throws an SSL error"""
+    mock_get = mocker.patch(
+        "course_catalog.etl.csail.requests.get",
+        autospec=True,
+        side_effect=[SSLError("Fake error"), mocker.Mock()],
+    )
+    url = "https://fake.edu"
+    _unverified_cert_request(url)
+    mock_get.assert_any_call(url)
+    mock_get.assert_any_call(url.replace("https:", "http:"))
