@@ -28,6 +28,7 @@ def _unverified_cert_request(url):
     """
     CSAIL currently has an unverified SSL certificate.  Try requesting the https URL anyway,
     in case it gets fixed soon, but if it fails revert to http.
+
     Args:
         url(str): The CSAIL URL to request
 
@@ -42,20 +43,22 @@ def _unverified_cert_request(url):
 
 def _parse_image(course):
     """
-    Extract image for a course
+    Extract image src for a course
 
     Args:
         course(Tag): The BeautifulSoup tag containing course data
 
     Returns:
-          str: image URL
-
+          str: image src URL
     """
     try:
-        img = course.find("div", {"class": "field--name-field-media-image"}).find("img")
+        return (
+            course.find("div", {"class": "field--name-field-media-image"})
+            .find("img")
+            .get("src")
+        )
     except AttributeError:
         return None
-    return img.get("src")
 
 
 def _parse_price(details):
@@ -120,13 +123,16 @@ def _parse_instructors(details):
         list of dict: List of first & last names of each instructor
 
     """
-    instructors = details.findAll(
-        "div", {"class": "field--name-field-learn-more-links"}
-    )[-1].findAll("div", {"class": "field__item"})
-    return [
-        instructor.get_text().strip().split(",", 1)[0].split(" ", 1)
-        for instructor in instructors
-    ]
+    try:
+        instructors = details.findAll(
+            "div", {"class": "field--name-field-learn-more-links"}
+        )[-1].findAll("div", {"class": "field__item"})
+        return [
+            instructor.get_text().strip().split(",", 1)[0].split(" ", 1)
+            for instructor in instructors
+        ]
+    except (AttributeError, IndexError):
+        return []
 
 
 def _parse_short_description(course):

@@ -14,6 +14,8 @@ from course_catalog.etl.csail import (
     _parse_price,
     _parse_run_dates,
     _unverified_cert_request,
+    _parse_instructors,
+    _parse_image,
 )
 
 # pylint: disable=unused-argument,redefined-outer-name
@@ -187,3 +189,15 @@ def test_bad_ssl_certificate(mocker):
     _unverified_cert_request(url)
     mock_get.assert_any_call(url)
     mock_get.assert_any_call(url.replace("https:", "http:"))
+
+
+def test__parse_instructors_empty():
+    """Test that an empty list is returned if the instructors div is not found"""
+    soup = BeautifulSoup("<html></html>", "html.parser")
+    assert _parse_instructors(soup) == []
+
+
+def test__parse_image_empty():
+    """Test that None is returned if the image tag is not found"""
+    soup = BeautifulSoup("<html></html>", "html.parser")
+    assert _parse_image(soup) is None
