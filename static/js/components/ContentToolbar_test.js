@@ -5,18 +5,18 @@ import sinon from "sinon"
 import { assert } from "chai"
 import { shallow } from "enzyme"
 
-import CourseToolbar from "./CourseToolbar"
+import ContentToolbar from "./ContentToolbar"
 
 import { COURSE_URL, userListIndexURL } from "../lib/url"
 import { makeProfile } from "../factories/profiles"
 import * as util from "../lib/util"
 
-describe("CourseToolbar", () => {
+describe("ContentToolbar", () => {
   let sandbox
 
   const renderToolbar = () =>
     shallow(
-      <CourseToolbar
+      <ContentToolbar
         toggleShowUserMenu={sandbox.stub()}
         showUserMenu={false}
         profile={makeProfile()}

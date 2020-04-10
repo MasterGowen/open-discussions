@@ -20,7 +20,7 @@ type Props = {
   toggleShowUserMenu: Function
 }
 
-export default class CourseToolbar extends React.Component<Props> {
+export default class ContentToolbar extends React.Component<Props> {
   toolbarRoot: { current: null | React$ElementRef<typeof HTMLElement> }
   toolbar: Object
 
