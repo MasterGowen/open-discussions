@@ -7,7 +7,7 @@ import { shallow } from "enzyme"
 
 import ContentToolbar from "./ContentToolbar"
 
-import { COURSE_URL, userListIndexURL } from "../lib/url"
+import { COURSE_URL,PODCAST_URL,  userListIndexURL } from "../lib/url"
 import { makeProfile } from "../factories/profiles"
 import * as util from "../lib/util"
 
@@ -47,6 +47,16 @@ describe("ContentToolbar", () => {
         .at(1)
         .prop("to"),
       COURSE_URL
+    )
+  })
+
+  it("should include a link to podcasts", () => {
+    assert.equal(
+      renderToolbar()
+        .find("Link")
+        .at(2)
+        .prop("to"),
+      PODCAST_URL
     )
   })
 
