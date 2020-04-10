@@ -192,7 +192,7 @@ class App extends React.Component<Props> {
         <MetaTags>
           <title>MIT Open Learning</title>
         </MetaTags>
-        <Route path={`${match.url}learn/`}>
+        <Route path={[`${match.url}learn/`, `${match.url}podcasts/`] }>
           {({ match }) =>
             match ? (
               <CourseToolbar
