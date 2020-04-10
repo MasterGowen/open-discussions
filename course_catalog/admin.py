@@ -146,14 +146,14 @@ class PodcastAdmin(admin.ModelAdmin):
     """PodcastAdmin"""
 
     model = Podcast
-    search_fields = "full_description"
+    search_fields = ("full_description",)
 
 
 class PodcastEpisodeAdmin(admin.ModelAdmin):
     """PodcastEpisodeAdmin"""
 
     model = PodcastEpisode
-    search_fields = "full_description"
+    search_fields = ("full_description",)
 
 
 admin.site.register(CourseTopic, CourseTopicAdmin)
