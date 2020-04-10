@@ -7,7 +7,7 @@ import { shallow } from "enzyme"
 
 import ContentToolbar from "./ContentToolbar"
 
-import { COURSE_URL,PODCAST_URL,  userListIndexURL } from "../lib/url"
+import { COURSE_URL, PODCAST_URL, userListIndexURL } from "../lib/url"
 import { makeProfile } from "../factories/profiles"
 import * as util from "../lib/util"
 
