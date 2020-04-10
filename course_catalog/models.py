@@ -504,6 +504,9 @@ class Podcast(LearningResource, LearningResourceGenericRelationsMixin):
     url = models.URLField(null=True, max_length=2048)
     searchable = models.BooleanField(default=True)
 
+    def __str__(self):
+        return self.title
+
     @property
     def platform(self):
         """Platform for podcasts"""
