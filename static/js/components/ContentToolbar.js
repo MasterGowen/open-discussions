@@ -56,12 +56,12 @@ export default class ContentToolbar extends React.Component<Props> {
                 </Link>
                 <div className="bar">{" | "}</div>
                 <Route path="/learn/">
-                  <Link className="learning-link" to={COURSE_URL}>
+                  <Link className="section-link" to={COURSE_URL}>
                     LEARN
                   </Link>
                 </Route>
                 <Route path="/podcasts/">
-                  <Link className="learning-link" to={PODCAST_URL}>
+                  <Link className="section-link" to={PODCAST_URL}>
                     PODCASTS
                   </Link>
                 </Route>
